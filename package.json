@@ -1,0 +1,13 @@
+{
+  "name": "nepali-teacher",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm --parallel --filter @nt/server --filter @nt/web dev",
+    "build": "pnpm --filter @nt/web build && pnpm --filter @nt/server build",
+    "typecheck": "pnpm -r typecheck",
+    "test": "pnpm -r test",
+    "user:create": "pnpm --filter @nt/server user:create",
+    "db:generate": "pnpm --filter @nt/server db:generate"
+  }
+}
