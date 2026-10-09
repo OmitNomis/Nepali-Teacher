@@ -1,0 +1,34 @@
+// Usage: pnpm user:create <username> <admin|learner> [display name]
+// Prompts for the password. Running it for an existing username resets the password.
+import { createInterface } from "node:readline/promises";
+import { ROLES, type Role } from "@nt/shared";
+import { hashPassword } from "../auth";
+import { loadConfig } from "../config";
+import { openDb } from "../db";
+import { users } from "../db/schema";
+import fs from "node:fs";
+
+const [username, role, ...nameParts] = process.argv.slice(2);
+if (!username || !ROLES.includes(role as Role)) {
+  console.error("Usage: pnpm user:create <username> <admin|learner> [display name]");
+  process.exit(1);
+}
+
+const rl = createInterface({ input: process.stdin, output: process.stdout });
+const password = process.env.NT_PASSWORD ?? (await rl.question("Password: "));
+rl.close();
+if (password.length < 8) {
+  console.error("Password must be at least 8 characters");
+  process.exit(1);
+}
+
+const config = loadConfig();
+fs.mkdirSync(config.dataDir, { recursive: true });
+const db = openDb(config.dbFile, config.migrationsDir);
+const passwordHash = await hashPassword(password);
+const displayName = nameParts.join(" ") || username;
+db.insert(users)
+  .values({ username, role: role as Role, displayName, passwordHash })
+  .onConflictDoUpdate({ target: users.username, set: { passwordHash, role: role as Role, displayName } })
+  .run();
+console.log(`Saved ${role} "${username}"`);
