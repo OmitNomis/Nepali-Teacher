@@ -1,0 +1,139 @@
+@import "tailwindcss";
+
+/* Palette: Nepali flag crimson + deep Himalayan blue on warm paper. */
+:root {
+  --bg: #fbf6ee;
+  --surface: #ffffff;
+  --surface-2: #f4ece0;
+  --ink: #1f1a2e;
+  --muted: #6e6578;
+  --line: #ebe1d2;
+  --brand: #d4213d;
+  --brand-ink: #ffffff;
+  --brand-soft: #fde6e9;
+  --indigo: #1e3a8a;
+  --indigo-soft: #e4eafb;
+  --gold: #d98a1f;
+  --gold-soft: #fbefd9;
+  --ok: #23875c;
+  --ok-soft: #dff3e9;
+  --shadow: 0 1px 2px rgb(60 30 20 / 0.06), 0 8px 24px -12px rgb(60 30 20 / 0.18);
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #16131f;
+    --surface: #201c2b;
+    --surface-2: #2a2537;
+    --ink: #f4efe8;
+    --muted: #a69eb3;
+    --line: #342e43;
+    --brand: #f0506a;
+    --brand-ink: #ffffff;
+    --brand-soft: #3b1d29;
+    --indigo: #93a9f2;
+    --indigo-soft: #1f2747;
+    --gold: #f0b25a;
+    --gold-soft: #3a2c19;
+    --ok: #5ccf98;
+    --ok-soft: #173327;
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 30px -14px rgb(0 0 0 / 0.6);
+    color-scheme: dark;
+  }
+}
+
+@theme inline {
+  --color-bg: var(--bg);
+  --color-surface: var(--surface);
+  --color-surface-2: var(--surface-2);
+  --color-ink: var(--ink);
+  --color-muted: var(--muted);
+  --color-line: var(--line);
+  --color-brand: var(--brand);
+  --color-brand-ink: var(--brand-ink);
+  --color-brand-soft: var(--brand-soft);
+  --color-indigo: var(--indigo);
+  --color-indigo-soft: var(--indigo-soft);
+  --color-gold: var(--gold);
+  --color-gold-soft: var(--gold-soft);
+  --color-ok: var(--ok);
+  --color-ok-soft: var(--ok-soft);
+  --shadow-card: var(--shadow);
+  --font-sans: "M PLUS Rounded 1c", "Noto Sans Devanagari", "Hiragino Maru Gothic ProN", system-ui, sans-serif;
+  --font-ne: "Noto Sans Devanagari", "Kohinoor Devanagari", "M PLUS Rounded 1c", sans-serif;
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-bg text-ink font-sans antialiased;
+    min-height: 100dvh;
+    overscroll-behavior-y: none;
+  }
+  :lang(ne) {
+    font-family: var(--font-ne);
+  }
+  button {
+    cursor: pointer;
+  }
+  input,
+  textarea,
+  select {
+    /* iOS zooms into inputs smaller than 16px */
+    font-size: 16px;
+  }
+}
+
+@utility pt-safe {
+  padding-top: env(safe-area-inset-top);
+}
+@utility pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+@utility press {
+  transition: transform 120ms ease, background-color 150ms ease, opacity 150ms ease;
+  &:active {
+    transform: scale(0.97);
+  }
+}
+
+@keyframes sheet-in {
+  from { transform: translateY(100%); }
+  to { transform: translateY(0); }
+}
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+@keyframes pop-in {
+  0% { opacity: 0; transform: translateY(8px) scale(0.98); }
+  100% { opacity: 1; transform: none; }
+}
+@keyframes pulse-ring {
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 45%, transparent); }
+  100% { box-shadow: 0 0 0 22px transparent; }
+}
+
+@utility animate-sheet {
+  animation: sheet-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+@utility animate-fade {
+  animation: fade-in 200ms ease;
+}
+@utility animate-pop {
+  animation: pop-in 320ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@utility animate-ring {
+  animation: pulse-ring 1.2s ease-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 1ms !important;
+    transition-duration: 1ms !important;
+  }
+}
