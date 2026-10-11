@@ -94,6 +94,12 @@
 @utility pb-safe {
   padding-bottom: env(safe-area-inset-bottom);
 }
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
 @utility press {
   transition: transform 120ms ease, background-color 150ms ease, opacity 150ms ease;
   &:active {

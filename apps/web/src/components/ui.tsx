@@ -8,9 +8,8 @@ import {
   useId,
   useState,
   type ButtonHTMLAttributes,
-  type InputHTMLAttributes,
+  type ComponentProps,
   type ReactNode,
-  type TextareaHTMLAttributes,
 } from "react";
 import { createPortal } from "react-dom";
 import { Link } from "react-router";
@@ -23,6 +22,16 @@ const variants: Record<Variant, string> = {
   ghost: "text-ink hover:bg-surface-2",
   danger: "bg-brand-soft text-brand hover:brightness-95",
 };
+
+const buttonClass = (variant: Variant, size: "sm" | "md" | "lg") =>
+  clsx(
+    "press inline-flex items-center justify-center gap-2 rounded-2xl font-bold select-none",
+    "disabled:opacity-50 disabled:pointer-events-none",
+    size === "sm" && "h-9 px-3 text-sm",
+    size === "md" && "h-12 px-5",
+    size === "lg" && "h-14 px-6 text-lg",
+    variants[variant],
+  );
 
 export function Button({
   variant = "primary",
@@ -39,20 +48,32 @@ export function Button({
 }) {
   return (
     <button
-      className={clsx(
-        "press inline-flex items-center justify-center gap-2 rounded-2xl font-bold select-none",
-        "disabled:opacity-50 disabled:pointer-events-none",
-        size === "sm" && "h-9 px-3 text-sm",
-        size === "md" && "h-12 px-5",
-        size === "lg" && "h-14 px-6 text-lg",
-        variants[variant],
-        className,
-      )}
+      className={clsx(buttonClass(variant, size), className)}
       disabled={disabled || loading}
       {...props}
     >
       {loading ? <LoaderCircle className="size-5 animate-spin" /> : children}
     </button>
+  );
+}
+
+export function LinkButton({
+  to,
+  variant = "secondary",
+  size = "md",
+  className,
+  children,
+}: {
+  to: string;
+  variant?: Variant;
+  size?: "sm" | "md" | "lg";
+  className?: string;
+  children: ReactNode;
+}) {
+  return (
+    <Link to={to} className={clsx(buttonClass(variant, size), "shrink-0", className)}>
+      {children}
+    </Link>
   );
 }
 
@@ -231,11 +252,11 @@ export function Field({
 const inputClass =
   "w-full rounded-2xl border border-line bg-bg px-4 py-3 text-ink placeholder:text-muted/60 outline-none transition focus:border-indigo focus:ring-4 focus:ring-indigo/15";
 
-export function TextInput({ className, ...props }: InputHTMLAttributes<HTMLInputElement>) {
+export function TextInput({ className, ...props }: ComponentProps<"input">) {
   return <input className={clsx(inputClass, className)} {...props} />;
 }
 
-export function TextArea({ className, ...props }: TextareaHTMLAttributes<HTMLTextAreaElement>) {
+export function TextArea({ className, ...props }: ComponentProps<"textarea">) {
   return <textarea className={clsx(inputClass, "min-h-24 resize-y", className)} {...props} />;
 }
 

@@ -1,5 +1,5 @@
 import type { AppType } from "@nt/server/app";
-import { hc, type InferResponseType } from "hono/client";
+import { hc, type ClientResponse, type InferResponseType, type parseResponse } from "hono/client";
 
 export const client = hc<AppType>("/").api;
 
@@ -13,9 +13,9 @@ export class ApiError extends Error {
 }
 
 /** Turns a hono client response into its JSON body, throwing ApiError on failure. */
-export async function unwrap<T extends { ok: boolean; status: number; json(): Promise<unknown> }>(
-  res: Promise<T> | T,
-): Promise<Awaited<ReturnType<Extract<T, { ok: true }>["json"]>>> {
+export async function unwrap<T extends ClientResponse<unknown>>(
+  res: T | Promise<T>,
+): Promise<Awaited<ReturnType<typeof parseResponse<T>>>> {
   const r = await res;
   if (!r.ok) {
     const body = (await r.json().catch(() => null)) as { error?: string } | null;
@@ -32,7 +32,11 @@ export async function uploadAudio(itemId: string, blob: Blob) {
     method: "POST",
     body: form,
   });
-  return unwrap(res as never) as Promise<{ audioId: string; audioUrl: string }>;
+  if (!res.ok) {
+    const body = (await res.json().catch(() => null)) as { error?: string } | null;
+    throw new ApiError(res.status, body?.error ?? `Upload failed (${res.status})`);
+  }
+  return (await res.json()) as { audioId: string; audioUrl: string };
 }
 
 export type ChapterSummary = InferResponseType<typeof client.chapters.$get, 200>[number];
