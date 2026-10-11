@@ -15,15 +15,15 @@ export function Login() {
   return (
     <div className="pt-safe pb-safe relative flex min-h-dvh flex-col overflow-hidden">
       {/* sky + Himalaya, echoing the app icon */}
-      <div className="absolute inset-x-0 top-0 h-[46dvh] bg-gradient-to-b from-brand to-[color-mix(in_srgb,var(--brand)_70%,var(--indigo))]" />
-      <div className="absolute top-[12dvh] right-[14%] size-20 rounded-full bg-[#ffe9c7] opacity-90" />
+      <div className="absolute inset-x-0 top-0 h-[46dvh] bg-gradient-to-b from-[#e23b4e] to-[#a3173a]" />
+      <div className="absolute top-[calc(46dvh-150px)] right-[16%] size-16 rounded-full bg-[#ffe9c7]" />
       <svg
         className="absolute inset-x-0 top-[calc(46dvh-118px)] h-[120px] w-full"
         viewBox="0 0 400 120"
         preserveAspectRatio="none"
         aria-hidden
       >
-        <path d="M0 120 V70 L70 20 L110 55 L170 5 L240 70 L290 40 L340 75 L400 45 V120 Z" fill="var(--indigo)" />
+        <path d="M0 120 V70 L70 20 L110 55 L170 5 L240 70 L290 40 L340 75 L400 45 V120 Z" fill="#1e3a8a" />
         <path d="M0 120 V95 C80 75 160 90 220 100 C290 112 350 100 400 88 V120 Z" fill="var(--bg)" />
       </svg>
 

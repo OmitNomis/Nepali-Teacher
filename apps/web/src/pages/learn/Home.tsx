@@ -52,7 +52,7 @@ export function Home() {
         <p className="mt-1 text-2xl font-extrabold">{me?.displayName}さん、こんにちは！</p>
       </header>
 
-      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-brand to-indigo p-6 text-white shadow-card">
+      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#d4213d] to-[#1e3a8a] p-6 text-white shadow-card">
         <svg
           className="pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full opacity-25"
           viewBox="0 0 400 80"
@@ -72,7 +72,7 @@ export function Home() {
           {firstScript && (
             <Link
               to={`/chapters/${firstScript.id}`}
-              className="press mt-5 inline-flex h-11 items-center gap-1 rounded-2xl bg-white px-5 font-extrabold text-brand"
+              className="press mt-5 inline-flex h-11 items-center gap-1 rounded-2xl bg-white px-5 font-extrabold text-[#d4213d]"
             >
               まずは文字を聞いてみる <ChevronRight className="size-4" />
             </Link>

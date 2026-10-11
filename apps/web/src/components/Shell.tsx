@@ -1,24 +1,33 @@
 import clsx from "clsx";
 import { House, Library, Mic, UserRound } from "lucide-react";
 import type { ReactNode } from "react";
-import { Navigate, NavLink, Outlet } from "react-router";
+import { Link, Navigate, Outlet, useLocation } from "react-router";
 import { useMe } from "../lib/queries";
 
-function Tab({ to, icon, label, end }: { to: string; icon: ReactNode; label: string; end?: boolean }) {
+function Tab({
+  to,
+  icon,
+  label,
+  match,
+}: {
+  to: string;
+  icon: ReactNode;
+  label: string;
+  match: (path: string) => boolean;
+}) {
+  const active = match(useLocation().pathname);
   return (
-    <NavLink
+    <Link
       to={to}
-      end={end}
-      className={({ isActive }) =>
-        clsx(
-          "press flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-[11px] font-bold transition-colors",
-          isActive ? "text-brand" : "text-muted",
-        )
-      }
+      aria-current={active ? "page" : undefined}
+      className={clsx(
+        "press flex flex-1 flex-col items-center gap-0.5 rounded-2xl py-2 text-[11px] font-bold transition-colors",
+        active ? "text-brand" : "text-muted",
+      )}
     >
       {icon}
       {label}
-    </NavLink>
+    </Link>
   );
 }
 
@@ -32,10 +41,24 @@ export function Shell() {
       </main>
       <nav className="pb-safe fixed inset-x-0 bottom-0 z-40 border-t border-line/70 bg-bg/85 backdrop-blur-xl">
         <div className="mx-auto flex max-w-2xl gap-1 px-3 py-1.5">
-          <Tab to="/" end icon={<House className="size-6" />} label="ホーム" />
-          {admin && <Tab to="/admin" icon={<Library className="size-6" />} label="Content" />}
-          {admin && <Tab to="/admin/record" icon={<Mic className="size-6" />} label="Record" />}
-          <Tab to="/account" icon={<UserRound className="size-6" />} label="アカウント" />
+          <Tab
+            to="/"
+            icon={<House className="size-6" />}
+            label="ホーム"
+            match={(p) => p === "/" || p.startsWith("/chapters/")}
+          />
+          {admin && (
+            <Tab
+              to="/admin"
+              icon={<Library className="size-6" />}
+              label="Content"
+              match={(p) => p === "/admin" || p.startsWith("/admin/chapters/")}
+            />
+          )}
+          {admin && (
+            <Tab to="/admin/record" icon={<Mic className="size-6" />} label="Record" match={(p) => p === "/admin/record"} />
+          )}
+          <Tab to="/account" icon={<UserRound className="size-6" />} label="アカウント" match={(p) => p === "/account"} />
         </div>
       </nav>
     </div>
