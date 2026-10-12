@@ -23,6 +23,7 @@ import {
   createItem,
   exportChapter,
   getChapter,
+  getItem,
   importChapter,
   listChapters,
   listMissingAudio,
@@ -33,11 +34,14 @@ import {
   updateItem,
 } from "./content";
 import type { Db } from "./db";
+import { queueTts } from "./tts";
 
 export function createApp(db: Db, config: Config) {
   const anyUser = requireRole(db);
   const admin = requireRole(db, "admin");
   const throttle = new LoginThrottle();
+  const ttsOn = config.tts.provider !== "none";
+  const autoTts = (ids: string[]) => (ttsOn ? queueTts(db, ids) : 0);
 
   const auth = new Hono<AppEnv>()
     .get("/me", (c) => c.json({ user: sessionUser(c, db) }))
@@ -82,19 +86,40 @@ export function createApp(db: Db, config: Config) {
       return c.json({ ok: true });
     })
     .get("/chapters/:id/export", admin, (c) => c.json(exportChapter(db, c.req.param("id"))))
-    .post("/chapters/import", admin, zValidator("json", chapterFile), (c) =>
-      c.json(importChapter(db, c.req.valid("json"))),
-    )
-    .post("/chapters/:id/items", admin, zValidator("json", itemInput), (c) =>
-      c.json(createItem(db, c.req.param("id"), c.req.valid("json")), 201),
+    .post("/chapters/import", admin, zValidator("json", chapterFile), (c) => {
+      const result = importChapter(db, c.req.valid("json"));
+      const chapter = getChapter(db, result.chapterId, { includeArchived: false });
+      return c.json({ ...result, ttsQueued: autoTts(chapter.items.map((i) => i.id)) });
+    })
+    .post("/chapters/:id/items", admin, zValidator("json", itemInput), (c) => {
+      const item = createItem(db, c.req.param("id"), c.req.valid("json"));
+      autoTts([item.id]);
+      return c.json(item, 201);
+    })
+    .post("/chapters/:id/tts", admin, (c) => {
+      if (!ttsOn) throw new HTTPException(400, { message: "TTS is turned off on the server" });
+      const chapter = getChapter(db, c.req.param("id"), { includeArchived: false });
+      return c.json({ queued: queueTts(db, chapter.items.map((i) => i.id)) });
+    })
+    .get("/tts", admin, (c) =>
+      c.json({ provider: ttsOn ? config.tts.provider : null, voice: config.tts.voice }),
     )
     .post("/chapters/:id/items/reorder", admin, zValidator("json", reorderInput), (c) => {
       reorderItems(db, c.req.param("id"), c.req.valid("json").ids);
       return c.json({ ok: true });
     })
-    .patch("/items/:id", admin, zValidator("json", itemPatch), (c) =>
-      c.json(updateItem(db, c.req.param("id"), c.req.valid("json"))),
-    )
+    .patch("/items/:id", admin, zValidator("json", itemPatch), (c) => {
+      const id = c.req.param("id");
+      const before = getItem(db, id);
+      const patch = c.req.valid("json");
+      // TTS of the old text is now wrong: drop it so a fresh one gets made
+      if (patch.ne !== undefined && patch.ne !== before.ne && before.audioSource === "tts") {
+        deleteItemAudio(db, config, id);
+      }
+      const item = updateItem(db, id, patch);
+      autoTts([id]);
+      return c.json(item);
+    })
     .get("/items/missing-audio", admin, (c) => c.json(listMissingAudio(db)))
     .post("/items/:id/audio", admin, async (c) => {
       const body = await c.req.parseBody();

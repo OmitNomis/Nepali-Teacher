@@ -14,5 +14,12 @@ export function loadConfig(env = process.env) {
     webDist: env.WEB_DIST ? path.resolve(env.WEB_DIST) : undefined,
     secureCookies: env.NODE_ENV === "production",
     ffmpeg: env.FFMPEG_PATH ?? "ffmpeg",
+    tts: {
+      // azure (official, needs a key) | edge (unofficial, no key) | none
+      provider: (env.TTS_PROVIDER ?? (env.AZURE_SPEECH_KEY ? "azure" : "edge")) as "azure" | "edge" | "none",
+      voice: env.TTS_VOICE ?? "ne-NP-HemkalaNeural",
+      azureKey: env.AZURE_SPEECH_KEY,
+      azureRegion: env.AZURE_SPEECH_REGION ?? "eastus",
+    },
   };
 }

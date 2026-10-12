@@ -1,4 +1,4 @@
-import { and, asc, eq, isNull, sql } from "drizzle-orm";
+import { and, asc, eq, isNull, or, sql, type SQL } from "drizzle-orm";
 import type {
   ChapterFile,
   ChapterInput,
@@ -7,20 +7,47 @@ import type {
   ItemPatch,
 } from "@nt/shared";
 import type { Db } from "./db";
-import { chapters, items, type Item } from "./db/schema";
+import { audio, chapters, items, type Audio, type Item } from "./db/schema";
 import { newId } from "./ids";
 
 export class NotFoundError extends Error {}
 export class ConflictError extends Error {}
 
-export type ItemView = Omit<Item, "createdAt" | "updatedAt"> & { audioUrl: string | null };
+export type ItemView = Omit<Item, "createdAt" | "updatedAt"> & {
+  audioUrl: string | null;
+  audioSource: Audio["source"] | null;
+};
 
-const audioUrl = (audioId: string | null) => (audioId ? `/api/audio/${audioId}` : null);
-
-const toItemView = ({ createdAt: _c, updatedAt: _u, ...item }: Item): ItemView => ({
+const toItemView = (
+  { createdAt: _c, updatedAt: _u, ...item }: Item,
+  audioSource: Audio["source"] | null,
+): ItemView => ({
   ...item,
-  audioUrl: audioUrl(item.audioId),
+  audioUrl: item.audioId ? `/api/audio/${item.audioId}` : null,
+  audioSource,
 });
+
+/** Items that still need a human recording: no audio yet, or only a TTS placeholder. */
+const needsRecording = or(isNull(items.audioId), eq(audio.source, "tts"))!;
+
+function selectItemViews(db: Pick<Db, "select">, where: SQL | undefined) {
+  return db
+    .select({ item: items, audioSource: audio.source, chapterTitle: chapters.titleJa })
+    .from(items)
+    .leftJoin(audio, eq(items.audioId, audio.id))
+    .innerJoin(chapters, eq(items.chapterId, chapters.id))
+    .where(where)
+    .orderBy(asc(chapters.track), asc(chapters.position), asc(items.position))
+    .all()
+    .map((r) => ({ ...toItemView(r.item, r.audioSource), chapterTitle: r.chapterTitle }));
+}
+
+export function getItem(db: Db, id: string) {
+  const [row] = selectItemViews(db, eq(items.id, id));
+  if (!row) throw new NotFoundError("Item not found");
+  const { chapterTitle: _, ...view } = row;
+  return view;
+}
 
 export function listChapters(db: Db, opts: { includeArchived: boolean }) {
   return db
@@ -34,9 +61,11 @@ export function listChapters(db: Db, opts: { includeArchived: boolean }) {
       archived: chapters.archived,
       itemCount: sql<number>`count(${items.id})`,
       missingAudio: sql<number>`count(${items.id}) - count(${items.audioId})`,
+      ttsAudio: sql<number>`count(case when ${audio.source} = 'tts' then 1 end)`,
     })
     .from(chapters)
     .leftJoin(items, and(eq(items.chapterId, chapters.id), eq(items.archived, false)))
+    .leftJoin(audio, eq(items.audioId, audio.id))
     .where(opts.includeArchived ? undefined : eq(chapters.archived, false))
     .groupBy(chapters.id)
     .orderBy(asc(chapters.track), asc(chapters.position))
@@ -48,18 +77,11 @@ export function getChapter(db: Db, id: string, opts: { includeArchived: boolean 
   if (!chapter || (chapter.archived && !opts.includeArchived)) {
     throw new NotFoundError("Chapter not found");
   }
-  const rows = db
-    .select()
-    .from(items)
-    .where(
-      and(
-        eq(items.chapterId, id),
-        opts.includeArchived ? undefined : eq(items.archived, false),
-      ),
-    )
-    .orderBy(asc(items.position))
-    .all();
-  return { ...chapter, items: rows.map(toItemView) };
+  const rows = selectItemViews(
+    db,
+    and(eq(items.chapterId, id), opts.includeArchived ? undefined : eq(items.archived, false)),
+  ).map(({ chapterTitle: _, ...view }) => view);
+  return { ...chapter, items: rows };
 }
 
 const nextPosition = (db: Pick<Db, "select">, table: typeof chapters | typeof items, where?: ReturnType<typeof eq>) =>
@@ -96,13 +118,13 @@ export function createItem(db: Db, chapterId: string, input: ItemInput, id = new
   db.insert(items)
     .values({ id, chapterId, ...input, position: nextPosition(db, items, eq(items.chapterId, chapterId)) })
     .run();
-  return toItemView(db.select().from(items).where(eq(items.id, id)).get()!);
+  return getItem(db, id);
 }
 
 export function updateItem(db: Db, id: string, patch: ItemPatch) {
   const res = db.update(items).set(patch).where(eq(items.id, id)).run();
   if (res.changes === 0) throw new NotFoundError("Item not found");
-  return toItemView(db.select().from(items).where(eq(items.id, id)).get()!);
+  return getItem(db, id);
 }
 
 export function reorderItems(db: Db, chapterId: string, ids: string[]) {
@@ -116,18 +138,9 @@ export function reorderItems(db: Db, chapterId: string, ids: string[]) {
   });
 }
 
+/** The recording queue: items with no audio or only TTS, in course order. */
 export function listMissingAudio(db: Db) {
-  return db
-    .select({
-      item: items,
-      chapterTitle: chapters.titleJa,
-    })
-    .from(items)
-    .innerJoin(chapters, eq(items.chapterId, chapters.id))
-    .where(and(isNull(items.audioId), eq(items.archived, false), eq(chapters.archived, false)))
-    .orderBy(asc(chapters.track), asc(chapters.position), asc(items.position))
-    .all()
-    .map((r) => ({ ...toItemView(r.item), chapterTitle: r.chapterTitle }));
+  return selectItemViews(db, and(needsRecording, eq(items.archived, false), eq(chapters.archived, false)));
 }
 
 export function exportChapter(db: Db, id: string): ChapterFile {

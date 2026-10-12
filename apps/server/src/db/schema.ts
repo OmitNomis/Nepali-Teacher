@@ -43,6 +43,8 @@ export const chapters = sqliteTable("chapters", {
   updatedAt: updatedAt(),
 });
 
+export const AUDIO_SOURCES = ["recording", "tts"] as const;
+
 export const audio = sqliteTable("audio", {
   id: text("id").primaryKey(),
   // path relative to DATA_DIR/audio
@@ -50,6 +52,9 @@ export const audio = sqliteTable("audio", {
   mime: text("mime").notNull(),
   bytes: integer("bytes").notNull(),
   trimmed: integer("trimmed", { mode: "boolean" }).notNull().default(false),
+  // "tts" clips are placeholders until a human recording replaces them
+  source: text("source", { enum: AUDIO_SOURCES }).notNull().default("recording"),
+  voice: text("voice"),
   createdBy: integer("created_by").references(() => users.id, { onDelete: "set null" }),
   createdAt: createdAt(),
 });
