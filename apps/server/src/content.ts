@@ -155,7 +155,16 @@ export function exportChapter(db: Db, id: string): ChapterFile {
       descriptionJa: chapter.descriptionJa,
       items: chapter.items
         .filter((i) => !i.archived)
-        .map((i) => ({ id: i.id, kind: i.kind, ne: i.ne, ja: i.ja, roman: i.roman, note: i.note })),
+        .map((i) => ({
+          id: i.id,
+          kind: i.kind,
+          ne: i.ne,
+          ja: i.ja,
+          roman: i.roman,
+          note: i.note,
+          register: i.register,
+          group: i.group,
+        })),
     },
   };
 }

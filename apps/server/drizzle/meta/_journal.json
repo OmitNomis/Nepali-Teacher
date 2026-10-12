@@ -15,6 +15,13 @@
       "when": 1791875283200,
       "tag": "0001_mushy_callisto",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1791875437662,
+      "tag": "0002_even_domino",
+      "breakpoints": true
     }
   ]
 }

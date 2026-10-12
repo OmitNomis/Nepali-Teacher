@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
 import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { ITEM_KINDS, ROLES, TRACKS } from "@nt/shared";
+import { ITEM_KINDS, REGISTERS, ROLES, TRACKS } from "@nt/shared";
 
 const createdAt = () =>
   integer("created_at", { mode: "timestamp_ms" })
@@ -71,6 +71,8 @@ export const items = sqliteTable(
     ja: text("ja").notNull().default(""),
     roman: text("roman").notNull().default(""),
     note: text("note").notNull().default(""),
+    register: text("register", { enum: REGISTERS }),
+    group: text("group_key").notNull().default(""),
     audioId: text("audio_id").references(() => audio.id, { onDelete: "set null" }),
     position: integer("position").notNull(),
     archived: integer("archived", { mode: "boolean" }).notNull().default(false),

@@ -6,37 +6,67 @@ export type Track = (typeof TRACKS)[number];
 export const ITEM_KINDS = ["letter", "word", "phrase"] as const;
 export type ItemKind = (typeof ITEM_KINDS)[number];
 
+/**
+ * Politeness tier of a word/phrase, mirroring the pronoun it goes with:
+ * polite = तपाईं (丁寧), casual = तिमी (タメ口), intimate = तँ (ぞんざい).
+ */
+export const REGISTERS = ["polite", "casual", "intimate"] as const;
+export type Register = (typeof REGISTERS)[number];
+
 export const ROLES = ["admin", "learner"] as const;
 export type Role = (typeof ROLES)[number];
 
 const text = z.string().trim();
-const optionalText = text.max(2000).default("");
+const longText = text.max(2000);
+
+// Base shapes carry no defaults: patch schemas are built from these, because a
+// .default() survives .partial() in zod 4 and would wipe fields on every PATCH.
+const chapterFields = {
+  titleJa: text.min(1).max(200),
+  titleNe: longText,
+  descriptionJa: longText,
+  track: z.enum(TRACKS),
+};
 
 export const chapterInput = z.object({
-  titleJa: text.min(1).max(200),
-  titleNe: optionalText,
-  descriptionJa: optionalText,
-  track: z.enum(TRACKS),
+  ...chapterFields,
+  titleNe: longText.default(""),
+  descriptionJa: longText.default(""),
 });
 export type ChapterInput = z.infer<typeof chapterInput>;
 
-export const chapterPatch = chapterInput.partial().extend({
-  archived: z.boolean().optional(),
-});
+export const chapterPatch = z
+  .object(chapterFields)
+  .partial()
+  .extend({ archived: z.boolean().optional() });
 export type ChapterPatch = z.infer<typeof chapterPatch>;
 
-export const itemInput = z.object({
+const itemFields = {
   kind: z.enum(ITEM_KINDS),
   ne: text.min(1).max(500),
-  ja: optionalText,
-  roman: optionalText,
-  note: optionalText,
+  ja: longText,
+  roman: longText,
+  note: longText,
+  register: z.enum(REGISTERS).nullable(),
+  // items sharing a group are variants of one expression (e.g. the same
+  // question at each politeness tier) and are shown together
+  group: text.max(100),
+};
+
+export const itemInput = z.object({
+  ...itemFields,
+  ja: longText.default(""),
+  roman: longText.default(""),
+  note: longText.default(""),
+  register: itemFields.register.default(null),
+  group: itemFields.group.default(""),
 });
 export type ItemInput = z.infer<typeof itemInput>;
 
-export const itemPatch = itemInput.partial().extend({
-  archived: z.boolean().optional(),
-});
+export const itemPatch = z
+  .object(itemFields)
+  .partial()
+  .extend({ archived: z.boolean().optional() });
 export type ItemPatch = z.infer<typeof itemPatch>;
 
 export const reorderInput = z.object({

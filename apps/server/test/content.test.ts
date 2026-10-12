@@ -79,6 +79,21 @@ describe("importChapter", () => {
   });
 });
 
+describe("patch schemas", () => {
+  it("leave omitted fields alone instead of resetting them to defaults", async () => {
+    const { itemPatch, chapterPatch } = await import("@nt/shared");
+    expect(itemPatch.parse({ archived: true })).toEqual({ archived: true });
+    expect(chapterPatch.parse({ archived: true })).toEqual({ archived: true });
+  });
+
+  it("archiving an item keeps its translation", () => {
+    const c = createChapter(db, { track: "phrases", titleJa: "A", titleNe: "", descriptionJa: "" });
+    const item = createItem(db, c, { kind: "word", ne: "पानी", ja: "水", roman: "pānī", note: "", register: null, group: "" });
+    updateItem(db, item.id, { archived: true });
+    expect(getChapter(db, c, { includeArchived: true }).items[0]).toMatchObject({ ja: "水", roman: "pānī" });
+  });
+});
+
 describe("listChapters", () => {
   it("counts items and missing audio, skipping archived items", () => {
     const c = createChapter(db, { track: "script", titleJa: "母音", titleNe: "", descriptionJa: "" });
