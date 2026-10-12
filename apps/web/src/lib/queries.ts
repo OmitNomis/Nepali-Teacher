@@ -20,6 +20,13 @@ export const useChapter = (id: string) =>
     queryFn: () => unwrap(client.chapters[":id"].$get({ param: { id } })),
   });
 
+export const useTtsStatus = () =>
+  useQuery({
+    queryKey: ["tts"],
+    queryFn: () => unwrap(client.tts.$get()),
+    staleTime: Infinity,
+  });
+
 export const useMissingAudio = () =>
   useQuery({
     queryKey: ["missing-audio"],

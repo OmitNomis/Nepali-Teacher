@@ -1,6 +1,6 @@
 import { PartyPopper, SkipForward } from "lucide-react";
 import { useState } from "react";
-import { StudioRecorder } from "../../components/audio";
+import { PlayButton, StudioRecorder } from "../../components/audio";
 import { Button, Card, EmptyState, LinkButton, PageHeader, PageLoader } from "../../components/ui";
 import { useMissingAudio } from "../../lib/queries";
 
@@ -56,6 +56,11 @@ export function RecordQueue() {
             </p>
             {current.roman && <p className="mt-3 text-lg font-bold text-muted">{current.roman}</p>}
             {current.ja && <p className="mt-1 font-bold">{current.ja}</p>}
+            {current.audioSource === "tts" && current.audioUrl && (
+              <div className="mt-5 flex items-center gap-2 rounded-full bg-indigo-soft py-1 pr-4 pl-1 text-sm font-bold text-indigo">
+                <PlayButton url={current.audioUrl} size="sm" /> TTS reference
+              </div>
+            )}
           </Card>
 
           <StudioRecorder

@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import clsx from "clsx";
-import { Archive, ArchiveRestore, Download, Eye, ListPlus, Pencil, Plus } from "lucide-react";
+import { Archive, ArchiveRestore, AudioLines, Download, Eye, ListPlus, Pencil, Plus } from "lucide-react";
 import { useState } from "react";
 import { useParams } from "react-router";
 import { PlayButton, RecordButton } from "../../components/audio";
 import { Badge, Button, Card, EmptyState, IconButton, LinkButton, PageHeader, PageLoader, useToast } from "../../components/ui";
 import { client, unwrap, type Item } from "../../lib/api";
-import { useChapter } from "../../lib/queries";
-import { ChapterSheet, ItemSheet } from "./forms";
+import { useChapter, useTtsStatus } from "../../lib/queries";
+import { ChapterSheet, ItemSheet, RecordingBadges } from "./forms";
 
 function ItemRow({ item, index, onEdit }: { item: Item; index: number; onEdit: () => void }) {
   return (
@@ -18,15 +18,18 @@ function ItemRow({ item, index, onEdit }: { item: Item; index: number; onEdit: (
           <p lang="ne" className="truncate text-xl font-semibold">
             {item.ne}
           </p>
-          <p className="truncate text-sm text-muted">
-            {[item.ja, item.roman].filter(Boolean).join(" · ") || <span className="italic">no translation</span>}
+          <p className="flex items-center gap-1.5 truncate text-sm text-muted">
+            {item.audioSource === "tts" && <Badge tone="indigo">TTS</Badge>}
+            <span className="truncate">
+              {[item.ja, item.roman].filter(Boolean).join(" · ") || <span className="italic">no translation</span>}
+            </span>
           </p>
         </div>
       </button>
       {!item.archived && (
         <>
           {item.audioUrl && <PlayButton url={item.audioUrl} />}
-          <RecordButton itemId={item.id} hasAudio={!!item.audioUrl} />
+          <RecordButton itemId={item.id} hasAudio={item.audioSource === "recording"} />
         </>
       )}
     </Card>
@@ -50,6 +53,19 @@ export function AdminChapter() {
     },
   });
 
+  const ttsStatus = useTtsStatus();
+  const generateTts = useMutation({
+    mutationFn: () => unwrap(client.chapters[":id"].tts.$post({ param: { id } })),
+    onSuccess: (r) => {
+      toast(r.queued ? `Generating ${r.queued} clips…` : "Nothing to generate");
+      // TTS runs in the background; refresh a few times to pick up results
+      for (const ms of [3000, 8000, 15000, 30000]) {
+        setTimeout(() => void qc.invalidateQueries({ queryKey: ["chapter", id] }), ms);
+      }
+    },
+    onError: (e) => toast(e.message, "error"),
+  });
+
   const exportJson = async () => {
     const data = await unwrap(client.chapters[":id"].export.$get({ param: { id } }));
     const blob = new Blob([JSON.stringify(data, null, 2) + "\n"], { type: "application/json" });
@@ -67,6 +83,7 @@ export function AdminChapter() {
   const active = chapter.items.filter((i) => !i.archived);
   const archived = chapter.items.filter((i) => i.archived);
   const missing = active.filter((i) => !i.audioUrl).length;
+  const tts = active.filter((i) => i.audioSource === "tts").length;
   const editing = itemSheet?.item ? chapter.items.find((i) => i.id === itemSheet.item!.id) : undefined;
 
   return (
@@ -85,7 +102,7 @@ export function AdminChapter() {
       <div className="mb-4 flex flex-wrap items-center gap-2">
         <Badge tone="indigo">{chapter.track === "script" ? "Script" : "Phrases"}</Badge>
         <Badge>{active.length} items</Badge>
-        {missing > 0 ? <Badge tone="gold">{missing} need audio</Badge> : active.length > 0 && <Badge tone="ok">All recorded</Badge>}
+        <RecordingBadges itemCount={active.length} missing={missing} tts={tts} />
         {chapter.archived && <Badge tone="brand">Archived</Badge>}
       </div>
 
@@ -93,6 +110,11 @@ export function AdminChapter() {
         <LinkButton to={`/chapters/${chapter.id}`} size="sm">
           <Eye className="size-4" /> Preview
         </LinkButton>
+        {ttsStatus.data?.provider && missing > 0 && (
+          <Button size="sm" variant="secondary" loading={generateTts.isPending} onClick={() => generateTts.mutate()}>
+            <AudioLines className="size-4" /> TTS for {missing}
+          </Button>
+        )}
         <Button size="sm" variant="secondary" onClick={() => void exportJson()}>
           <Download className="size-4" /> Export JSON
         </Button>

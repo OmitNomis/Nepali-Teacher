@@ -7,7 +7,7 @@ import type { Track } from "@nt/shared";
 import { Badge, Button, Card, EmptyState, IconButton, PageHeader, PageLoader } from "../../components/ui";
 import { client, unwrap, type ChapterSummary } from "../../lib/api";
 import { useChapters } from "../../lib/queries";
-import { ChapterSheet, ImportSheet, TRACK_OPTIONS } from "./forms";
+import { ChapterSheet, ImportSheet, RecordingBadges, TRACK_OPTIONS } from "./forms";
 
 function ChapterRow({
   chapter,
@@ -33,8 +33,7 @@ function ChapterRow({
         )}
         <div className="mt-2 flex flex-wrap gap-1.5">
           <Badge>{chapter.itemCount} items</Badge>
-          {chapter.missingAudio > 0 && <Badge tone="gold">{chapter.missingAudio} need audio</Badge>}
-          {chapter.itemCount > 0 && chapter.missingAudio === 0 && <Badge tone="ok">All recorded</Badge>}
+          <RecordingBadges itemCount={chapter.itemCount} missing={chapter.missingAudio} tts={chapter.ttsAudio} />
           {chapter.archived && <Badge>Archived</Badge>}
         </div>
       </div>

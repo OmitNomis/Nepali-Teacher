@@ -2,8 +2,21 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Archive, ArchiveRestore, ArrowDown, ArrowUp, FileUp, MicOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { chapterFile, type ItemKind, type Track } from "@nt/shared";
-import { Button, Field, Segmented, Sheet, TextArea, TextInput, useToast } from "../../components/ui";
+import { Badge, Button, Field, Segmented, Sheet, TextArea, TextInput, useToast } from "../../components/ui";
 import { client, unwrap, type ChapterDetail, type Item } from "../../lib/api";
+
+/** "3 to record · 2 TTS" style status for a set of items. */
+export function RecordingBadges({ itemCount, missing, tts }: { itemCount: number; missing: number; tts: number }) {
+  const toRecord = missing + tts;
+  if (itemCount === 0) return null;
+  if (toRecord === 0) return <Badge tone="ok">All recorded</Badge>;
+  return (
+    <>
+      <Badge tone="gold">{toRecord} to record</Badge>
+      {tts > 0 && <Badge tone="indigo">{tts} TTS</Badge>}
+    </>
+  );
+}
 
 const useInvalidateContent = () => {
   const qc = useQueryClient();
@@ -271,7 +284,7 @@ export function ItemSheet({
             )}
             {item.audioUrl && (
               <Button type="button" size="sm" variant="secondary" onClick={() => removeAudio.mutate()}>
-                <MicOff className="size-4" /> Remove audio
+                <MicOff className="size-4" /> {item.audioSource === "tts" ? "Remove TTS" : "Remove audio"}
               </Button>
             )}
             <Button
