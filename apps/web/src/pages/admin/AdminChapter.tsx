@@ -7,6 +7,7 @@ import { PlayButton, RecordButton } from "../../components/audio";
 import { Badge, Button, Card, EmptyState, IconButton, LinkButton, PageHeader, PageLoader, useToast } from "../../components/ui";
 import { client, unwrap, type Item } from "../../lib/api";
 import { useChapter, useTtsStatus } from "../../lib/queries";
+import { REGISTER_INFO } from "../../lib/registers";
 import { ChapterSheet, ItemSheet, RecordingBadges } from "./forms";
 
 function ItemRow({ item, index, onEdit }: { item: Item; index: number; onEdit: () => void }) {
@@ -19,6 +20,7 @@ function ItemRow({ item, index, onEdit }: { item: Item; index: number; onEdit: (
             {item.ne}
           </p>
           <p className="flex items-center gap-1.5 truncate text-sm text-muted">
+            {item.register && <Badge tone="brand">{REGISTER_INFO[item.register].pronoun}</Badge>}
             {item.audioSource === "tts" && <Badge tone="indigo">TTS</Badge>}
             <span className="truncate">
               {[item.ja, item.roman].filter(Boolean).join(" · ") || <span className="italic">no translation</span>}

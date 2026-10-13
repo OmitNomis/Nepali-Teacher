@@ -1,7 +1,8 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Archive, ArchiveRestore, ArrowDown, ArrowUp, FileUp, MicOff } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
-import { chapterFile, type ItemKind, type Track } from "@nt/shared";
+import { chapterFile, type ItemKind, type Register, type Track } from "@nt/shared";
+import { REGISTER_INFO, REGISTER_ORDER } from "../../lib/registers";
 import { Badge, Button, Field, Segmented, Sheet, TextArea, TextInput, useToast } from "../../components/ui";
 import { client, unwrap, type ChapterDetail, type Item } from "../../lib/api";
 
@@ -128,7 +129,20 @@ const KIND_OPTIONS: { value: ItemKind; label: string }[] = [
   { value: "phrase", label: "Phrase" },
 ];
 
-const emptyItem = (kind: ItemKind) => ({ kind, ne: "", ja: "", roman: "", note: "" });
+const emptyItem = (kind: ItemKind, keep?: { register: Register | null; group: string }) => ({
+  kind,
+  ne: "",
+  ja: "",
+  roman: "",
+  note: "",
+  register: keep?.register ?? null,
+  group: keep?.group ?? "",
+});
+
+const REGISTER_OPTIONS: { value: Register | "none"; label: string }[] = [
+  { value: "none", label: "—" },
+  ...REGISTER_ORDER.map((r) => ({ value: r, label: REGISTER_INFO[r].pronoun })),
+];
 
 /** Create (with "save & next" for fast entry) or edit an item. */
 export function ItemSheet({
@@ -150,7 +164,19 @@ export function ItemSheet({
 
   useEffect(() => {
     if (open) {
-      setForm(item ? { kind: item.kind, ne: item.ne, ja: item.ja, roman: item.roman, note: item.note } : emptyItem(defaultKind));
+      setForm(
+        item
+          ? {
+              kind: item.kind,
+              ne: item.ne,
+              ja: item.ja,
+              roman: item.roman,
+              note: item.note,
+              register: item.register,
+              group: item.group,
+            }
+          : emptyItem(defaultKind),
+      );
     }
   }, [open, item, defaultKind]);
 
@@ -163,7 +189,8 @@ export function ItemSheet({
       invalidate();
       if (next) {
         toast(`Added ${form.ne}`);
-        setForm(emptyItem(form.kind));
+        // keep the group: tiers of one phrase usually get entered back to back
+        setForm(emptyItem(form.kind, { register: null, group: form.group }));
         neRef.current?.focus();
       } else {
         onClose();
@@ -243,6 +270,31 @@ export function ItemSheet({
             )}
           </Field>
         </div>
+        {form.kind !== "letter" && (
+          <>
+            <Field label="Politeness" hint={form.register ? `${REGISTER_INFO[form.register].admin} · ${REGISTER_INFO[form.register].ja}` : "Neutral / not pronoun-specific"}>
+              {() => (
+                <Segmented
+                  value={form.register ?? "none"}
+                  onChange={(v) => setForm({ ...form, register: v === "none" ? null : v })}
+                  options={REGISTER_OPTIONS}
+                />
+              )}
+            </Field>
+            <Field label="Variant group (optional)" hint="Same key on each tier of one phrase, e.g. ate-food">
+              {(id) => (
+                <TextInput
+                  id={id}
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  placeholder="ate-food"
+                  value={form.group}
+                  onChange={(e) => setForm({ ...form, group: e.target.value })}
+                />
+              )}
+            </Field>
+          </>
+        )}
         <Field label="Note (Japanese, optional)" hint="Shown to her under the item — usage tips, nuance.">
           {(id) => <TextArea id={id} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />}
         </Field>
