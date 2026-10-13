@@ -2,6 +2,6 @@ packages:
   - apps/*
   - packages/*
 allowBuilds:
-  better-sqlite3: true
+  better-sqlite3: false
   esbuild: true
   msedge-tts: false

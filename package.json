@@ -9,5 +9,6 @@
     "test": "pnpm -r test",
     "user:create": "pnpm --filter @nt/server user:create",
     "db:generate": "pnpm --filter @nt/server db:generate"
-  }
+  },
+  "packageManager": "pnpm@11.17.0"
 }
