@@ -1,6 +1,9 @@
 import path from "node:path";
 
 export type Config = ReturnType<typeof loadConfig>;
+export type TtsProviderName = "azure" | "edge" | "google" | "none";
+
+const defaultVoice = (provider: string) => (provider === "google" ? "ne" : "ne-NP-HemkalaNeural");
 
 export function loadConfig(env = process.env) {
   const dataDir = path.resolve(env.DATA_DIR ?? "./data");
@@ -15,9 +18,10 @@ export function loadConfig(env = process.env) {
     secureCookies: env.NODE_ENV === "production",
     ffmpeg: env.FFMPEG_PATH ?? "ffmpeg",
     tts: {
-      // azure (official, needs a key) | edge (unofficial, no key) | none
-      provider: (env.TTS_PROVIDER ?? (env.AZURE_SPEECH_KEY ? "azure" : "edge")) as "azure" | "edge" | "none",
-      voice: env.TTS_VOICE ?? "ne-NP-HemkalaNeural",
+      // azure (official, needs a key) | edge / google (unofficial, no key) | none
+      provider: (env.TTS_PROVIDER ?? (env.AZURE_SPEECH_KEY ? "azure" : "google")) as TtsProviderName,
+      // azure/edge take a voice name; google takes a language code ("ne")
+      voice: env.TTS_VOICE ?? defaultVoice(env.TTS_PROVIDER ?? (env.AZURE_SPEECH_KEY ? "azure" : "google")),
       azureKey: env.AZURE_SPEECH_KEY,
       azureRegion: env.AZURE_SPEECH_REGION ?? "eastus",
     },

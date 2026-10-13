@@ -67,3 +67,14 @@ describe("ttsJob", () => {
     expect(pendingJobs()).toHaveLength(1);
   });
 });
+
+describe("chunkText", () => {
+  it("leaves short text alone and splits long text at spaces", async () => {
+    const { chunkText } = await import("../src/tts");
+    expect(chunkText("नमस्ते")).toEqual(["नमस्ते"]);
+    const long = Array.from({ length: 60 }, () => "खाना").join(" ");
+    const chunks = chunkText(long, 50);
+    expect(chunks.every((c) => c.length <= 50)).toBe(true);
+    expect(chunks.join(" ")).toBe(long);
+  });
+});

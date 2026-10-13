@@ -53,6 +53,43 @@ export function edgeProvider(): TtsProvider {
   };
 }
 
+const GOOGLE_MAX_CHARS = 200;
+
+/** Splits text into chunks under the limit, breaking at spaces where possible. */
+export function chunkText(text: string, max = GOOGLE_MAX_CHARS) {
+  const chunks: string[] = [];
+  let rest = text.trim();
+  while (rest.length > max) {
+    const cut = rest.lastIndexOf(" ", max);
+    const at = cut > 0 ? cut : max;
+    chunks.push(rest.slice(0, at).trim());
+    rest = rest.slice(at).trim();
+  }
+  if (rest) chunks.push(rest);
+  return chunks;
+}
+
+/**
+ * Google Translate's read-aloud voice. Unofficial and no key; the "voice" is
+ * just a language code (e.g. "ne"). Requests cap at ~200 characters, so long
+ * text is synthesized in pieces and the MP3 frames concatenated.
+ */
+export function googleProvider(): TtsProvider {
+  return async (text, voice) => {
+    const parts: Buffer[] = [];
+    for (const chunk of chunkText(text)) {
+      const url = new URL("https://translate.google.com/translate_tts");
+      url.search = new URLSearchParams({ ie: "UTF-8", client: "tw-ob", tl: voice, q: chunk }).toString();
+      const res = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+      if (!res.ok) throw new Error(`Google TTS ${res.status}`);
+      parts.push(Buffer.from(await res.arrayBuffer()));
+    }
+    const buf = Buffer.concat(parts);
+    if (buf.length === 0) throw new Error("Google TTS returned no audio");
+    return buf;
+  };
+}
+
 export function providerFromConfig(config: Config): TtsProvider | null {
   switch (config.tts.provider) {
     case "azure":
@@ -60,6 +97,8 @@ export function providerFromConfig(config: Config): TtsProvider | null {
       return azureProvider(config.tts.azureKey, config.tts.azureRegion);
     case "edge":
       return edgeProvider();
+    case "google":
+      return googleProvider();
     default:
       return null;
   }

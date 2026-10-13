@@ -69,11 +69,15 @@ Set `TTS_PROVIDER` in `.env`:
 - `azure`: the official Microsoft Speech API. Reliable, and the free tier
   (500k characters/month) is far more than this app needs. Create a Speech
   resource in the Azure portal and set `AZURE_SPEECH_KEY` and `AZURE_SPEECH_REGION`.
-- `edge`: Microsoft Edge's read-aloud endpoint. No key, but it's unofficial and
-  can break without notice.
+- `google`: Google Translate's read-aloud voice. No key, works today, but it's
+  unofficial and sounds more robotic than the Microsoft voices. Default when no
+  Azure key is set.
+- `edge`: Microsoft Edge's read-aloud endpoint. No key, but unofficial, and it
+  has returned 403 for every library version since Oct 10, 2026.
 - `none`: turned off.
 
-Voices: `ne-NP-HemkalaNeural` (female, default) or `ne-NP-SagarNeural` (male).
+Voices (`TTS_VOICE`): `ne-NP-HemkalaNeural` (female, default) or
+`ne-NP-SagarNeural` (male) for azure/edge; a language code (`ne`) for google.
 
 New and imported items are queued for TTS automatically. Editing the Nepali text
 of an item that only has TTS regenerates it. A human recording always replaces
