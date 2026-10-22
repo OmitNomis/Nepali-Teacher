@@ -7,7 +7,7 @@ import { loadConfig, type Config } from "../src/config";
 import { createChapter, createItem, getItem, listMissingAudio } from "../src/content";
 import { openDb, type Db } from "../src/db";
 import { items, jobs, users } from "../src/db/schema";
-import { queueTts, ttsJob, TTS_JOB, type TtsProvider } from "../src/tts";
+import { queueTts, ttsJob, TTS_JOB, withGoogleFallback, type TtsProvider } from "../src/tts";
 
 let db: Db;
 let config: Config;
@@ -76,5 +76,22 @@ describe("chunkText", () => {
     const chunks = chunkText(long, 50);
     expect(chunks.every((c) => c.length <= 50)).toBe(true);
     expect(chunks.join(" ")).toBe(long);
+  });
+});
+
+describe("withGoogleFallback", () => {
+  const google: TtsProvider = async (text, voice) => Buffer.from(`google:${voice}:${text}`);
+
+  it("uses the primary provider when it works", async () => {
+    const tts = withGoogleFallback(fakeProvider, "edge", google);
+    expect((await tts("नमस्ते", "ne-NP-HemkalaNeural")).toString()).toBe("mp3:नमस्ते");
+  });
+
+  it("falls back to google with a language code when the primary fails", async () => {
+    const broken: TtsProvider = async () => {
+      throw new Error("403");
+    };
+    const tts = withGoogleFallback(broken, "edge", google);
+    expect((await tts("नमस्ते", "ne-NP-HemkalaNeural")).toString()).toBe("google:ne:नमस्ते");
   });
 });

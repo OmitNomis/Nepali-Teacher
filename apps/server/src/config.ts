@@ -6,6 +6,7 @@ export type TtsProviderName = "azure" | "edge" | "google" | "none";
 const defaultVoice = (provider: string) => (provider === "google" ? "ne" : "ne-NP-HemkalaNeural");
 
 export function loadConfig(env = process.env) {
+  const provider = (env.TTS_PROVIDER ?? (env.AZURE_SPEECH_KEY ? "azure" : "edge")) as TtsProviderName;
   const dataDir = path.resolve(env.DATA_DIR ?? "./data");
   return {
     port: Number(env.PORT ?? 8787),
@@ -19,9 +20,9 @@ export function loadConfig(env = process.env) {
     ffmpeg: env.FFMPEG_PATH ?? "ffmpeg",
     tts: {
       // azure (official, needs a key) | edge / google (unofficial, no key) | none
-      provider: (env.TTS_PROVIDER ?? (env.AZURE_SPEECH_KEY ? "azure" : "google")) as TtsProviderName,
+      provider,
       // azure/edge take a voice name; google takes a language code ("ne")
-      voice: env.TTS_VOICE ?? defaultVoice(env.TTS_PROVIDER ?? (env.AZURE_SPEECH_KEY ? "azure" : "google")),
+      voice: env.TTS_VOICE ?? defaultVoice(provider),
       azureKey: env.AZURE_SPEECH_KEY,
       azureRegion: env.AZURE_SPEECH_REGION ?? "eastus",
     },

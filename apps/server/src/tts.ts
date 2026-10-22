@@ -90,13 +90,28 @@ export function googleProvider(): TtsProvider {
   };
 }
 
+/**
+ * Tries the primary provider and falls back to Google on failure, so an
+ * outage of an unofficial endpoint degrades audio quality instead of failing.
+ */
+export function withGoogleFallback(primary: TtsProvider, name: string, google = googleProvider()): TtsProvider {
+  return async (text, voice) => {
+    try {
+      return await primary(text, voice);
+    } catch (err) {
+      console.warn(`TTS: ${name} failed, falling back to google:`, (err as Error).message);
+      return google(text, "ne");
+    }
+  };
+}
+
 export function providerFromConfig(config: Config): TtsProvider | null {
   switch (config.tts.provider) {
     case "azure":
       if (!config.tts.azureKey) throw new Error("TTS_PROVIDER=azure needs AZURE_SPEECH_KEY");
       return azureProvider(config.tts.azureKey, config.tts.azureRegion);
     case "edge":
-      return edgeProvider();
+      return withGoogleFallback(edgeProvider(), "edge");
     case "google":
       return googleProvider();
     default:
