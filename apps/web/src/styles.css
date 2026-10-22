@@ -2,43 +2,47 @@
 
 /* Palette: Nepali flag crimson + deep Himalayan blue on warm paper. */
 :root {
-  --bg: #fbf6ee;
+  --bg: #f7f3ec;
   --surface: #ffffff;
-  --surface-2: #f4ece0;
-  --ink: #1f1a2e;
-  --muted: #6e6578;
-  --line: #ebe1d2;
+  --surface-2: #f0ebe3;
+  --ink: #1c1a24;
+  --muted: #736d7e;
+  --line: #e7e0d5;
   --brand: #d4213d;
   --brand-ink: #ffffff;
-  --brand-soft: #fde6e9;
-  --indigo: #1e3a8a;
-  --indigo-soft: #e4eafb;
-  --gold: #d98a1f;
-  --gold-soft: #fbefd9;
-  --ok: #23875c;
-  --ok-soft: #dff3e9;
-  --shadow: 0 1px 2px rgb(60 30 20 / 0.06), 0 8px 24px -12px rgb(60 30 20 / 0.18);
+  --brand-soft: #fbe8eb;
+  --brand-deep: #7d1430;
+  --indigo: #24408f;
+  --indigo-soft: #e8edf9;
+  --gold: #925600;
+  --gold-soft: #fbf1df;
+  --ok: #1f7a52;
+  --ok-soft: #e0f2e9;
+  --shadow: 0 1px 2px rgb(40 25 15 / 0.05), 0 6px 20px -10px rgb(40 25 15 / 0.14);
+  --shadow-lift: 0 2px 6px rgb(40 25 15 / 0.06), 0 18px 40px -16px rgb(40 25 15 / 0.28);
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #16131f;
-    --surface: #201c2b;
-    --surface-2: #2a2537;
-    --ink: #f4efe8;
-    --muted: #a69eb3;
-    --line: #342e43;
-    --brand: #f0506a;
+    --bg: #121017;
+    --surface: #1c1922;
+    --surface-2: #27232f;
+    --ink: #f3efe9;
+    --muted: #a39cae;
+    --line: #2f2a39;
+    --brand: #ff5a72;
     --brand-ink: #ffffff;
-    --brand-soft: #3b1d29;
-    --indigo: #93a9f2;
-    --indigo-soft: #1f2747;
-    --gold: #f0b25a;
-    --gold-soft: #3a2c19;
+    --brand-soft: #3a1a25;
+    --brand-deep: #5a0f25;
+    --indigo: #a3b5f5;
+    --indigo-soft: #1f2645;
+    --gold: #f0b45a;
+    --gold-soft: #33281a;
     --ok: #5ccf98;
     --ok-soft: #173327;
-    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 10px 30px -14px rgb(0 0 0 / 0.6);
+    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -14px rgb(0 0 0 / 0.6);
+    --shadow-lift: 0 2px 6px rgb(0 0 0 / 0.35), 0 20px 44px -16px rgb(0 0 0 / 0.7);
     color-scheme: dark;
   }
 }
@@ -53,6 +57,7 @@
   --color-brand: var(--brand);
   --color-brand-ink: var(--brand-ink);
   --color-brand-soft: var(--brand-soft);
+  --color-brand-deep: var(--brand-deep);
   --color-indigo: var(--indigo);
   --color-indigo-soft: var(--indigo-soft);
   --color-gold: var(--gold);
@@ -60,8 +65,12 @@
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
   --shadow-card: var(--shadow);
-  --font-sans: "M PLUS Rounded 1c", "Noto Sans Devanagari", "Hiragino Maru Gothic ProN", system-ui, sans-serif;
-  --font-ne: "Noto Sans Devanagari", "Kohinoor Devanagari", "M PLUS Rounded 1c", sans-serif;
+  --shadow-lift: var(--shadow-lift);
+  /* body: the phone's own Japanese font (Hiragino on iPhone); rounded font for headings only */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
+    "Noto Sans Devanagari", system-ui, sans-serif;
+  --font-display: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Noto Sans Devanagari", sans-serif;
+  --font-ne: "Noto Sans Devanagari", "Kohinoor Devanagari", sans-serif;
 }
 
 @layer base {
@@ -119,6 +128,10 @@
   0% { opacity: 0; transform: translateY(8px) scale(0.98); }
   100% { opacity: 1; transform: none; }
 }
+@keyframes eq {
+  0%, 100% { transform: scaleY(0.35); }
+  50% { transform: scaleY(1); }
+}
 @keyframes pulse-ring {
   0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 45%, transparent); }
   100% { box-shadow: 0 0 0 22px transparent; }
@@ -132,6 +145,10 @@
 }
 @utility animate-pop {
   animation: pop-in 320ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@utility animate-eq {
+  animation: eq 0.9s ease-in-out infinite;
+  transform-origin: bottom;
 }
 @utility animate-ring {
   animation: pulse-ring 1.2s ease-out infinite;
