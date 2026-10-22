@@ -1,84 +1,138 @@
-import { BookOpen, ChevronRight, MessagesSquare, Sparkles } from "lucide-react";
+import clsx from "clsx";
+import { BookOpen, ChevronRight, MessagesSquare, Play } from "lucide-react";
 import { Link } from "react-router";
-import type { Track } from "@nt/shared";
-import { Badge, Card, EmptyState, PageLoader } from "../../components/ui";
+import { EmptyState, List, PageLoader, SectionTitle } from "../../components/ui";
 import type { ChapterSummary } from "../../lib/api";
+import { lastChapter } from "../../lib/lastChapter";
 import { useChapters, useMe } from "../../lib/queries";
 
-const TRACKS: Record<Track, { ja: string; ne: string; icon: typeof BookOpen }> = {
-  script: { ja: "文字", ne: "अक्षर", icon: BookOpen },
-  phrases: { ja: "会話", ne: "कुराकानी", icon: MessagesSquare },
-};
+const countLabel = (c: ChapterSummary) => `${c.itemCount}${c.track === "script" ? "文字" : "フレーズ"}`;
 
-function ChapterCard({ chapter, index }: { chapter: ChapterSummary; index: number }) {
+/** Lungta prayer flags strung across the top: blue, white, red, green, yellow. */
+function PrayerFlags() {
+  const colors = ["#2f62c9", "#ffffff", "#d4213d", "#2e9d5b", "#f2b630"];
+  const flags = Array.from({ length: 15 }, (_, i) => i);
+  return (
+    <svg viewBox="0 0 300 34" className="pointer-events-none -mx-4 block h-8 w-[calc(100%+2rem)]" aria-hidden>
+      <path d="M-5 4 Q150 26 305 4" fill="none" stroke="var(--line)" strokeWidth="1" />
+      {flags.map((i) => {
+        const x = 8 + i * 20;
+        // follow the string's curve
+        const t = (x + 5) / 310;
+        const y = 4 + 2 * (1 - t) * t * 22;
+        return (
+          <path
+            key={i}
+            d={`M${x} ${y} h11 l-5.5 11 z`}
+            fill={colors[i % colors.length]}
+            stroke="var(--line)"
+            strokeWidth="0.5"
+            opacity="0.9"
+            transform={`rotate(${(t - 0.5) * -14} ${x + 5.5} ${y})`}
+          />
+        );
+      })}
+    </svg>
+  );
+}
+
+function ContinueCard({ chapter, resumed }: { chapter: ChapterSummary; resumed: boolean }) {
+  const preview = chapter.track === "script" ? chapter.preview.join(" ") : chapter.preview[0];
   return (
     <Link
       to={`/chapters/${chapter.id}`}
-      className="press animate-pop block"
-      style={{ animationDelay: `${index * 40}ms` }}
+      className="press animate-pop relative block overflow-hidden rounded-[28px] bg-gradient-to-br from-brand to-brand-deep p-5 text-white shadow-lift"
     >
-      <Card className="flex items-center gap-4 p-4">
-        <div className="grid size-12 shrink-0 place-items-center rounded-2xl bg-indigo-soft text-lg font-extrabold text-indigo">
-          {index + 1}
-        </div>
+      <svg
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-24 w-full"
+        viewBox="0 0 400 96"
+        preserveAspectRatio="none"
+        aria-hidden
+      >
+        <path d="M0 96 V58 L50 30 L88 50 L150 8 L215 56 L262 34 L320 62 L400 26 V96 Z" fill="white" opacity="0.08" />
+        <path d="M0 96 V76 L70 52 L130 72 L200 44 L270 74 L340 56 L400 70 V96 Z" fill="white" opacity="0.1" />
+      </svg>
+      <div className="relative flex items-end gap-4">
         <div className="min-w-0 flex-1">
-          <p className="truncate text-lg font-extrabold">{chapter.titleJa}</p>
-          {chapter.titleNe && (
-            <p lang="ne" className="truncate text-sm text-muted">
-              {chapter.titleNe}
+          <p className="text-[13px] font-bold opacity-75">{resumed ? "前回の続き" : "はじめよう"}</p>
+          <p className="font-display mt-1 truncate text-2xl font-extrabold">{chapter.titleJa}</p>
+          {preview && (
+            <p lang="ne" className="mt-3 truncate text-[28px] leading-tight font-medium opacity-95">
+              {preview}
             </p>
           )}
+          <p className="mt-2 text-[13px] font-bold opacity-75">{countLabel(chapter)}</p>
         </div>
-        <Badge>{chapter.itemCount}</Badge>
-        <ChevronRight className="size-5 text-muted" />
-      </Card>
+        <span className="grid size-14 shrink-0 place-items-center rounded-full bg-white text-brand shadow-lift">
+          <Play className="ml-0.5 size-6" fill="currentColor" />
+        </span>
+      </div>
     </Link>
   );
 }
+
+function ScriptTile({ chapter, index, wide }: { chapter: ChapterSummary; index: number; wide: boolean }) {
+  return (
+    <Link
+      to={`/chapters/${chapter.id}`}
+      className={clsx(
+        "press animate-pop flex flex-col rounded-[22px] border border-line/70 bg-surface p-4 shadow-card",
+        wide && "col-span-2",
+      )}
+      style={{ animationDelay: `${index * 40}ms` }}
+    >
+      <p lang="ne" className="truncate text-[30px] leading-tight font-medium text-indigo">
+        {chapter.preview.slice(0, wide ? 4 : 3).join(" ") || "—"}
+      </p>
+      <p className="mt-3 truncate text-[15px] font-bold">{chapter.titleJa}</p>
+      <p className="text-[13px] text-muted">{countLabel(chapter)}</p>
+    </Link>
+  );
+}
+
+function PhraseRow({ chapter }: { chapter: ChapterSummary }) {
+  return (
+    <Link to={`/chapters/${chapter.id}`} className="press flex items-center gap-3.5 px-4 py-3.5 active:bg-surface-2">
+      <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-indigo-soft text-indigo">
+        <MessagesSquare className="size-5" />
+      </span>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-[16px] font-bold">{chapter.titleJa}</p>
+        <p lang="ne" className="truncate text-[14px] text-muted">
+          {chapter.preview[0] ?? chapter.titleNe}
+        </p>
+      </div>
+      <span className="text-[13px] text-muted">{countLabel(chapter)}</span>
+      <ChevronRight className="size-4 text-muted/70" />
+    </Link>
+  );
+}
+
+const today = () =>
+  new Intl.DateTimeFormat("ja-JP", { month: "long", day: "numeric", weekday: "long" }).format(new Date());
 
 export function Home() {
   const { data: me } = useMe();
   const { data: chapters, isPending } = useChapters();
 
-  const byTrack = (track: Track) => chapters?.filter((c) => c.track === track) ?? [];
-  const firstScript = byTrack("script")[0];
+  const script = chapters?.filter((c) => c.track === "script") ?? [];
+  const phrases = chapters?.filter((c) => c.track === "phrases") ?? [];
+  const lastId = lastChapter();
+  const resumed = chapters?.find((c) => c.id === lastId);
+  const next = resumed ?? script[0] ?? phrases[0];
 
   return (
     <div className="flex flex-col gap-7">
-      <header className="pt-6">
-        <p lang="ne" className="text-4xl font-bold text-brand">
-          नमस्ते
-        </p>
-        <p className="mt-1 text-2xl font-extrabold">{me?.displayName}さん、こんにちは！</p>
-      </header>
-
-      <div className="relative overflow-hidden rounded-[2rem] bg-gradient-to-br from-[#d4213d] to-[#1e3a8a] p-6 text-white shadow-card">
-        <svg
-          className="pointer-events-none absolute inset-x-0 bottom-0 h-20 w-full opacity-25"
-          viewBox="0 0 400 80"
-          preserveAspectRatio="none"
-          aria-hidden
-        >
-          <path d="M0 80 V50 L60 15 L100 40 L160 0 L230 50 L280 25 L340 55 L400 30 V80 Z" fill="white" />
-        </svg>
-        <div className="relative">
-          <span className="inline-flex items-center gap-1 rounded-full bg-white/20 px-3 py-1 text-xs font-bold">
-            <Sparkles className="size-3.5" /> もうすぐ登場
+      <header>
+        <PrayerFlags />
+        <p className="mt-3 text-[13px] font-bold text-muted">{today()}</p>
+        <h1 className="font-display mt-1 text-[28px] leading-tight font-extrabold">
+          <span lang="ne" className="font-ne mr-2 font-semibold text-brand">
+            नमस्ते
           </span>
-          <p className="mt-3 text-2xl font-extrabold">毎日の復習</p>
-          <p className="mt-1 text-sm font-medium opacity-90">
-            覚えた文字を、ちょうどいいタイミングで復習できるようになります。
-          </p>
-          {firstScript && (
-            <Link
-              to={`/chapters/${firstScript.id}`}
-              className="press mt-5 inline-flex h-11 items-center gap-1 rounded-2xl bg-white px-5 font-extrabold text-[#d4213d]"
-            >
-              まずは文字を聞いてみる <ChevronRight className="size-4" />
-            </Link>
-          )}
-        </div>
-      </div>
+          {me?.displayName}さん
+        </h1>
+      </header>
 
       {isPending ? (
         <PageLoader />
@@ -87,24 +141,42 @@ export function Home() {
           もうすぐ追加されます。お楽しみに！
         </EmptyState>
       ) : (
-        (Object.keys(TRACKS) as Track[]).map((track) => {
-          const list = byTrack(track);
-          if (!list.length) return null;
-          const { ja, ne, icon: Icon } = TRACKS[track];
-          return (
-            <section key={track} className="flex flex-col gap-3">
-              <h2 className="flex items-center gap-2 px-1 text-lg font-extrabold">
-                <Icon className="size-5 text-brand" /> {ja}
-                <span lang="ne" className="text-sm font-medium text-muted">
-                  {ne}
+        <>
+          {next && <ContinueCard chapter={next} resumed={!!resumed} />}
+
+          {script.length > 0 && (
+            <section>
+              <SectionTitle>
+                文字{" "}
+                <span lang="ne" className="font-medium">
+                  अक्षर
                 </span>
-              </h2>
-              {list.map((c, i) => (
-                <ChapterCard key={c.id} chapter={c} index={i} />
-              ))}
+              </SectionTitle>
+              <div className="grid grid-cols-2 gap-3">
+                {script.map((c, i) => (
+                  // an odd last tile takes the full row instead of leaving a hole
+                  <ScriptTile key={c.id} chapter={c} index={i} wide={i === script.length - 1 && i % 2 === 0} />
+                ))}
+              </div>
             </section>
-          );
-        })
+          )}
+
+          {phrases.length > 0 && (
+            <section>
+              <SectionTitle>
+                会話{" "}
+                <span lang="ne" className="font-medium">
+                  कुराकानी
+                </span>
+              </SectionTitle>
+              <List className="animate-pop">
+                {phrases.map((c) => (
+                  <PhraseRow key={c.id} chapter={c} />
+                ))}
+              </List>
+            </section>
+          )}
+        </>
       )}
     </div>
   );
