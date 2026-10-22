@@ -30,17 +30,17 @@ content. See README.md for setup, deploy, and the chapter JSON format.
 - Audio: human recordings always win. TTS only fills gaps as placeholders,
   `audio.source = "tts"`.
 
-## TTS status (as of 2026-10-13)
-- `google` (keyless default): works, but sentences sound unnatural.
-- `edge`: Microsoft's endpoint returns 403 for every edge-tts version since
-  2026-10-10 (rany2/edge-tts#490). May work again later or from US servers.
+## TTS status (as of 2026-10-22)
+- `edge` (keyless default): works again since msedge-tts 2.1.0 (the 403s from
+  2026-10-10, rany2/edge-tts#490, were fixed 2026-10-13). Natural neural voices.
+  Failures fall back to `google` automatically.
+- `google`: works, but sentences sound unnatural.
 - `azure` (F0 free tier, hard-capped): same voices as Edge, needs a key.
-- Next to try: **Piper** offline Nepali voices (`ne_NP` "chitwan" / "google"
-  on huggingface rhasspy/piper-voices). Untested.
+- Piper offline Nepali voices remain an untested backup option.
 
 ## Roadmap
 1. Base app ✅
-2. Better TTS (Piper or Azure)
+2. Better TTS ✅ (Edge neural voices; Piper still an option)
 3. **Devanagari script SRS**: FSRS via `ts-fsrs`, review log table. Card types:
    letter→sound and sound→letter. Script order: vowels, consonants, then vowel
    marks (barakhari) early so real words are readable; conjuncts later.

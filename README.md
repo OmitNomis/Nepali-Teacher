@@ -69,11 +69,12 @@ Set `TTS_PROVIDER` in `.env`:
 - `azure`: the official Microsoft Speech API. Reliable, and the free tier
   (500k characters/month) is far more than this app needs. Create a Speech
   resource in the Azure portal and set `AZURE_SPEECH_KEY` and `AZURE_SPEECH_REGION`.
-- `google`: Google Translate's read-aloud voice. No key, works today, but it's
-  unofficial and sounds more robotic than the Microsoft voices. Default when no
-  Azure key is set.
-- `edge`: Microsoft Edge's read-aloud endpoint. No key, but unofficial, and it
-  has returned 403 for every library version since Oct 10, 2026.
+- `edge`: Microsoft Edge's read-aloud endpoint. Same natural voices as Azure,
+  no key. Default when no Azure key is set. It's unofficial and has broken
+  before (403s Oct 10–13, 2026, fixed in msedge-tts 2.1.0), so failed requests
+  fall back to Google automatically.
+- `google`: Google Translate's read-aloud voice. No key, unofficial, and sounds
+  noticeably more robotic.
 - `none`: turned off.
 
 Voices (`TTS_VOICE`): `ne-NP-HemkalaNeural` (female, default) or
