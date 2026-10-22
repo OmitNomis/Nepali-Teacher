@@ -102,4 +102,13 @@ describe("listChapters", () => {
     updateItem(db, gone.id, { archived: true });
     expect(listChapters(db, { includeArchived: false })[0]).toMatchObject({ itemCount: 1, missingAudio: 1 });
   });
+
+  it("previews the first few active items in order", () => {
+    const c = createChapter(db, { track: "script", titleJa: "母音", titleNe: "", descriptionJa: "" });
+    for (const ne of ["अ", "आ", "इ", "ई", "उ"]) createItem(db, c, { kind: "letter", ne, ja: "", roman: "", note: "" });
+    const empty = createChapter(db, { track: "phrases", titleJa: "空", titleNe: "", descriptionJa: "" });
+    const list = listChapters(db, { includeArchived: false });
+    expect(list.find((x) => x.id === c)!.preview).toEqual(["अ", "आ", "इ", "ई"]);
+    expect(list.find((x) => x.id === empty)!.preview).toEqual([]);
+  });
 });

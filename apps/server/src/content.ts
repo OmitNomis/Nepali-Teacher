@@ -49,6 +49,8 @@ export function getItem(db: Db, id: string) {
   return view;
 }
 
+const PREVIEW_ITEMS = 4;
+
 export function listChapters(db: Db, opts: { includeArchived: boolean }) {
   return db
     .select({
@@ -62,6 +64,10 @@ export function listChapters(db: Db, opts: { includeArchived: boolean }) {
       itemCount: sql<number>`count(${items.id})`,
       missingAudio: sql<number>`count(${items.id}) - count(${items.audioId})`,
       ttsAudio: sql<number>`count(case when ${audio.source} = 'tts' then 1 end)`,
+      // first few items' Nepali text, for chapter cards (JSON array)
+      preview: sql<string>`(select json_group_array(p.ne) from (
+        select i2.ne from items i2 where i2.chapter_id = ${chapters.id} and i2.archived = 0
+        order by i2.position limit ${PREVIEW_ITEMS}) p)`,
     })
     .from(chapters)
     .leftJoin(items, and(eq(items.chapterId, chapters.id), eq(items.archived, false)))
@@ -69,7 +75,8 @@ export function listChapters(db: Db, opts: { includeArchived: boolean }) {
     .where(opts.includeArchived ? undefined : eq(chapters.archived, false))
     .groupBy(chapters.id)
     .orderBy(asc(chapters.track), asc(chapters.position))
-    .all();
+    .all()
+    .map((c) => ({ ...c, preview: JSON.parse(c.preview) as string[] }));
 }
 
 export function getChapter(db: Db, id: string, opts: { includeArchived: boolean }) {
