@@ -46,6 +46,21 @@ export function PlayButton({
   );
 }
 
+/** Little animated equalizer, shown on whatever is playing. */
+export function EqBars({ className }: { className?: string }) {
+  return (
+    <span className={clsx("flex h-4 items-end gap-[3px]", className)} aria-hidden>
+      {[0, 0.25, 0.5].map((delay) => (
+        <span
+          key={delay}
+          className="animate-eq h-full w-[3px] rounded-full bg-current"
+          style={{ animationDelay: `-${delay}s` }}
+        />
+      ))}
+    </span>
+  );
+}
+
 const fmt = (ms: number) => `${Math.floor(ms / 1000)}.${Math.floor((ms % 1000) / 100)}s`;
 
 function useSaveAudio(itemId: string, onSaved?: () => void) {

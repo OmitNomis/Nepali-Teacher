@@ -5,6 +5,8 @@ import { useSyncExternalStore } from "react";
 let audio: HTMLAudioElement | null = null;
 let current: string | null = null;
 let queue: string[] = [];
+// the whole "play all" run, for progress display
+let run: { urls: string[]; index: number } | null = null;
 let gapTimer: ReturnType<typeof setTimeout> | undefined;
 // pause events are async; ignore the one we cause when switching clips
 let switching = false;
@@ -12,7 +14,11 @@ const listeners = new Set<() => void>();
 
 const QUEUE_GAP_MS = 900;
 
-const emit = () => listeners.forEach((l) => l());
+let runSnapshot: { urls: string[]; index: number } | null = null;
+const emit = () => {
+  runSnapshot = run && { ...run };
+  listeners.forEach((l) => l());
+};
 
 function setCurrent(url: string | null) {
   current = url;
@@ -29,19 +35,24 @@ function element() {
         setCurrent(null);
         gapTimer = setTimeout(() => start(queue.shift()!), QUEUE_GAP_MS);
       } else {
+        run = null;
         setCurrent(null);
       }
     });
     audio.addEventListener("pause", () => {
       if (!switching && !audio!.ended) {
         queue = [];
+        run = null;
         setCurrent(null);
       }
     });
     audio.addEventListener("error", () => {
       switching = false;
       if (queue.length) start(queue.shift()!);
-      else setCurrent(null);
+      else {
+        run = null;
+        setCurrent(null);
+      }
     });
   }
   return audio;
@@ -52,10 +63,12 @@ function start(url: string) {
   switching = true;
   el.pause();
   el.src = url;
+  if (run) run.index = run.urls.length - queue.length - 1;
   setCurrent(url);
   el.play().catch(() => {
     switching = false;
     queue = [];
+    run = null;
     setCurrent(null);
   });
 }
@@ -63,9 +76,11 @@ function start(url: string) {
 export function play(url: string) {
   clearTimeout(gapTimer);
   queue = [];
+  run = null;
   const el = element();
   if (current === url && !el.paused) {
     el.currentTime = 0;
+    emit();
     return;
   }
   start(url);
@@ -77,12 +92,14 @@ export function playAll(urls: string[]) {
   const [first, ...rest] = urls;
   if (!first) return;
   queue = rest;
+  run = { urls, index: 0 };
   start(first);
 }
 
 export function stop() {
   clearTimeout(gapTimer);
   queue = [];
+  run = null;
   audio?.pause();
   setCurrent(null);
 }
@@ -100,4 +117,9 @@ export function useNowPlaying() {
 /** True while a "play all" run is in progress (including the gaps). */
 export function useQueueActive() {
   return useSyncExternalStore(subscribe, () => current !== null || queue.length > 0);
+}
+
+/** The current "play all" run (all URLs and the index being played), or null. */
+export function usePlayRun() {
+  return useSyncExternalStore(subscribe, () => runSnapshot);
 }

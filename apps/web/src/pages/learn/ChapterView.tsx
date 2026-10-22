@@ -1,69 +1,135 @@
 import clsx from "clsx";
-import { Headphones, Square } from "lucide-react";
+import { Headphones, Lightbulb, Play, Square, Volume2, X } from "lucide-react";
 import { useEffect, useState } from "react";
 import { useParams } from "react-router";
-import { PlayButton } from "../../components/audio";
-import { Button, Card, EmptyState, PageHeader, PageLoader } from "../../components/ui";
+import { EqBars } from "../../components/audio";
+import { EmptyState, PageHeader, PageLoader } from "../../components/ui";
 import type { Item } from "../../lib/api";
-import { play, playAll, stop, useNowPlaying, useQueueActive } from "../../lib/player";
+import { rememberChapter } from "../../lib/lastChapter";
+import { play, playAll, stop, useNowPlaying, usePlayRun, useQueueActive } from "../../lib/player";
 import { useChapter } from "../../lib/queries";
 import { REGISTER_INFO, REGISTER_ORDER } from "../../lib/registers";
 
+const usePlaying = (url: string | null) => useNowPlaying() === url && url !== null;
+
+/** Tap to hear, tap again to stop. */
+const toggle = (url: string | null, playing: boolean) => {
+  if (!url) return;
+  if (playing) stop();
+  else play(url);
+};
+
 function LetterTile({ item, index }: { item: Item; index: number }) {
-  const playing = useNowPlaying() === item.audioUrl && item.audioUrl !== null;
+  const playing = usePlaying(item.audioUrl);
   return (
     <button
       type="button"
+      data-audio={item.audioUrl ?? undefined}
       disabled={!item.audioUrl}
-      onClick={() => item.audioUrl && play(item.audioUrl)}
+      onClick={() => toggle(item.audioUrl, playing)}
       style={{ animationDelay: `${Math.min(index, 20) * 25}ms` }}
       className={clsx(
-        "press animate-pop relative flex aspect-square flex-col items-center justify-center rounded-3xl border bg-surface shadow-card transition-colors",
-        playing ? "border-brand bg-brand-soft" : "border-line/60",
-        !item.audioUrl && "opacity-60",
+        "press animate-pop relative flex aspect-square flex-col items-center justify-center rounded-[22px] border transition-all duration-200",
+        playing
+          ? "scale-[1.03] border-brand bg-brand text-brand-ink shadow-lift"
+          : "border-line/70 bg-surface shadow-card",
+        !item.audioUrl && "border-dashed opacity-50 shadow-none",
       )}
     >
-      <span lang="ne" className={clsx("text-5xl leading-none font-semibold", playing && "text-brand")}>
+      <span lang="ne" className="text-[44px] leading-none font-medium">
         {item.ne}
       </span>
-      {item.roman && <span className="mt-2 text-xs font-bold text-muted">{item.roman}</span>}
+      {item.roman && (
+        <span className={clsx("mt-2.5 text-[13px] font-semibold", playing ? "text-brand-ink/85" : "text-muted")}>
+          {item.roman}
+        </span>
+      )}
+      {playing && <EqBars className="absolute top-3 right-3 h-3 text-brand-ink/80" />}
     </button>
   );
 }
 
-function PhraseRow({ item }: { item: Item }) {
-  const playing = useNowPlaying() === item.audioUrl && item.audioUrl !== null;
+function PlayIndicator({ playing, hasAudio }: { playing: boolean; hasAudio: boolean }) {
   return (
-    <Card className={clsx("flex items-center gap-3 p-4 transition-colors", playing && "border-brand bg-brand-soft")}>
-      <div className="min-w-0 flex-1">
-        <p lang="ne" className="text-xl font-semibold">
-          {item.ne}
-        </p>
-        {item.ja && <p className="mt-0.5 font-bold">{item.ja}</p>}
-        {item.roman && <p className="text-sm text-muted">{item.roman}</p>}
-        {item.register && (
-          <p className="mt-2 text-xs font-bold text-indigo">
-            {REGISTER_INFO[item.register].ja} · {REGISTER_INFO[item.register].hint}
-          </p>
-        )}
-        {item.note && <p className="mt-2 rounded-xl bg-gold-soft px-3 py-2 text-sm text-gold">{item.note}</p>}
-      </div>
-      <PlayButton url={item.audioUrl} />
-    </Card>
+    <span
+      className={clsx(
+        "grid size-10 shrink-0 place-items-center rounded-full transition-colors",
+        playing ? "bg-brand text-brand-ink" : "bg-indigo-soft text-indigo",
+        !hasAudio && "opacity-30",
+      )}
+    >
+      {playing ? <EqBars /> : <Volume2 className="size-[18px]" />}
+    </span>
   );
 }
 
-/** One expression at several politeness tiers, switchable with chips. */
+function Note({ children }: { children: string }) {
+  return (
+    <p className="mt-3 flex gap-2 rounded-2xl bg-gold-soft px-3 py-2.5 text-[13px] leading-relaxed text-gold">
+      <Lightbulb className="mt-0.5 size-4 shrink-0" />
+      <span>{children}</span>
+    </p>
+  );
+}
+
+/** The phrase itself: Nepali first and biggest, meaning and romanization under it. */
+function PhraseBody({ item, playing }: { item: Item; playing: boolean }) {
+  return (
+    <button
+      type="button"
+      data-audio={item.audioUrl ?? undefined}
+      onClick={() => toggle(item.audioUrl, playing)}
+      className="press flex w-full items-center gap-3 text-left"
+    >
+      <div className="min-w-0 flex-1">
+        <p lang="ne" className={clsx("text-[22px] leading-snug font-medium transition-colors", playing && "text-brand")}>
+          {item.ne}
+        </p>
+        {item.ja && <p className="mt-1 text-[15px] text-ink/85">{item.ja}</p>}
+        {item.roman && <p className="mt-0.5 text-[13px] text-muted">{item.roman}</p>}
+      </div>
+      <PlayIndicator playing={playing} hasAudio={!!item.audioUrl} />
+    </button>
+  );
+}
+
+const cardClass = (playing: boolean) =>
+  clsx(
+    "rounded-[22px] border bg-surface p-4 shadow-card transition-colors",
+    playing ? "border-brand/50" : "border-line/70",
+  );
+
+function PhraseCard({ item }: { item: Item }) {
+  const playing = usePlaying(item.audioUrl);
+  return (
+    <div className={cardClass(playing)}>
+      <PhraseBody item={item} playing={playing} />
+      {item.register && (
+        <p className="mt-2 text-xs font-bold text-indigo">
+          {REGISTER_INFO[item.register].ja} · {REGISTER_INFO[item.register].hint}
+        </p>
+      )}
+      {item.note && <Note>{item.note}</Note>}
+    </div>
+  );
+}
+
+/** One expression at several politeness tiers, switchable with a segmented control. */
 function VariantCard({ variants }: { variants: Item[] }) {
   const [selected, setSelected] = useState(0);
   const nowPlaying = useNowPlaying();
+  // follow "play all" through the tiers
+  useEffect(() => {
+    const i = variants.findIndex((v) => v.audioUrl !== null && v.audioUrl === nowPlaying);
+    if (i >= 0) setSelected(i);
+  }, [nowPlaying, variants]);
   const item = variants[selected] ?? variants[0]!;
-  const playing = variants.some((v) => v.audioUrl !== null && v.audioUrl === nowPlaying);
+  const playing = item.audioUrl !== null && item.audioUrl === nowPlaying;
   const info = item.register ? REGISTER_INFO[item.register] : null;
 
   return (
-    <Card className={clsx("p-4 transition-colors", playing && "border-brand bg-brand-soft")}>
-      <div className="no-scrollbar -mx-1 mb-3 flex gap-1.5 overflow-x-auto px-1" role="tablist">
+    <div className={cardClass(playing)}>
+      <div className="mb-3.5 flex rounded-full bg-surface-2 p-1" role="tablist">
         {variants.map((v, i) => {
           const r = v.register ? REGISTER_INFO[v.register] : null;
           return (
@@ -77,13 +143,13 @@ function VariantCard({ variants }: { variants: Item[] }) {
                 if (v.audioUrl) play(v.audioUrl);
               }}
               className={clsx(
-                "press flex shrink-0 items-center gap-1.5 rounded-full px-3.5 py-1.5 text-sm font-bold transition-colors",
-                i === selected ? "bg-ink text-bg" : "bg-surface-2 text-muted",
+                "press flex h-9 flex-1 items-center justify-center gap-1.5 rounded-full px-2 text-[13px] font-bold transition-colors",
+                i === selected ? "bg-surface text-ink shadow-card" : "text-muted",
               )}
             >
               {r ? r.ja : `#${i + 1}`}
               {r && (
-                <span lang="ne" className="text-xs font-medium opacity-75">
+                <span lang="ne" className="text-[11px] font-medium opacity-70">
                   {r.pronoun}
                 </span>
               )}
@@ -91,19 +157,12 @@ function VariantCard({ variants }: { variants: Item[] }) {
           );
         })}
       </div>
-      <div key={item.id} className="animate-fade flex items-center gap-3">
-        <div className="min-w-0 flex-1">
-          <p lang="ne" className="text-xl font-semibold">
-            {item.ne}
-          </p>
-          {item.ja && <p className="mt-0.5 font-bold">{item.ja}</p>}
-          {item.roman && <p className="text-sm text-muted">{item.roman}</p>}
-          {info && <p className="mt-2 text-xs font-bold text-indigo">{info.hint}</p>}
-          {item.note && <p className="mt-2 rounded-xl bg-gold-soft px-3 py-2 text-sm text-gold">{item.note}</p>}
-        </div>
-        <PlayButton url={item.audioUrl} />
+      <div key={item.id} className="animate-fade">
+        <PhraseBody item={item} playing={playing} />
+        {info && <p className="mt-2 text-xs font-bold text-indigo">{info.hint}</p>}
+        {item.note && <Note>{item.note}</Note>}
       </div>
-    </Card>
+    </div>
   );
 }
 
@@ -124,12 +183,54 @@ function groupVariants(items: Item[]) {
   return out;
 }
 
+/** Floating "now playing" bar while listening to the whole chapter. */
+function NowPlayingBar({ items }: { items: Item[] }) {
+  const run = usePlayRun();
+  const nowPlaying = useNowPlaying();
+  // between clips nothing is playing; keep showing the last one
+  const [last, setLast] = useState<Item | null>(null);
+  const item = items.find((i) => i.audioUrl !== null && i.audioUrl === nowPlaying);
+  useEffect(() => {
+    if (item) setLast(item);
+  }, [item]);
+  if (!run) return null;
+  const shown = item ?? last;
+  return (
+    <div className="animate-pop fixed inset-x-0 bottom-[calc(max(env(safe-area-inset-bottom),0.75rem)+4.75rem)] z-30 px-4">
+      <div className="mx-auto flex max-w-md items-center gap-3 rounded-full bg-ink py-2 pr-2 pl-5 text-bg shadow-lift">
+        <EqBars className="text-brand" />
+        <p lang="ne" className="min-w-0 flex-1 truncate text-[17px] font-medium">
+          {shown?.ne ?? "…"}
+        </p>
+        <span className="text-[13px] font-bold tabular-nums opacity-60">
+          {run.index + 1} / {run.urls.length}
+        </span>
+        <button type="button" aria-label="停止" onClick={stop} className="press grid size-10 place-items-center rounded-full bg-bg/15">
+          <X className="size-5" />
+        </button>
+      </div>
+    </div>
+  );
+}
+
 export function ChapterView() {
   const { id = "" } = useParams();
   const { data: chapter, isPending, error } = useChapter(id);
   const queueActive = useQueueActive();
+  const run = usePlayRun();
+  const nowPlaying = useNowPlaying();
 
   useEffect(() => () => stop(), []);
+  useEffect(() => {
+    if (chapter && !chapter.archived) rememberChapter(chapter.id);
+  }, [chapter]);
+  // keep the clip being played during "play all" on screen
+  useEffect(() => {
+    if (!run || !nowPlaying) return;
+    document
+      .querySelector(`[data-audio="${CSS.escape(nowPlaying)}"]`)
+      ?.scrollIntoView({ block: "center", behavior: "smooth" });
+  }, [run, nowPlaying]);
 
   if (isPending) return <PageLoader />;
   if (error || !chapter) return <PageHeader back="/" title="見つかりません" />;
@@ -145,25 +246,31 @@ export function ChapterView() {
         back="/"
         title={chapter.titleJa}
         subtitle={chapter.titleNe ? <span lang="ne">{chapter.titleNe}</span> : undefined}
+        action={
+          urls.length > 1 && (
+            <button
+              type="button"
+              onClick={() => (queueActive ? stop() : playAll(urls))}
+              className={clsx(
+                "press flex h-10 items-center gap-1.5 rounded-full px-4 text-[13px] font-bold shadow-card",
+                queueActive ? "bg-ink text-bg" : "bg-brand text-brand-ink",
+              )}
+            >
+              {queueActive ? (
+                <>
+                  <Square className="size-3.5" fill="currentColor" /> 停止
+                </>
+              ) : (
+                <>
+                  <Play className="size-4" fill="currentColor" /> 全部聞く
+                </>
+              )}
+            </button>
+          )
+        }
       />
-      {chapter.descriptionJa && <p className="mb-4 px-1 text-muted">{chapter.descriptionJa}</p>}
-
-      {urls.length > 1 && (
-        <Button
-          variant={queueActive ? "secondary" : "primary"}
-          className="mb-5 w-full"
-          onClick={() => (queueActive ? stop() : playAll(urls))}
-        >
-          {queueActive ? (
-            <>
-              <Square className="size-4" fill="currentColor" /> 停止
-            </>
-          ) : (
-            <>
-              <Headphones className="size-5" /> 全部聞く
-            </>
-          )}
-        </Button>
+      {chapter.descriptionJa && (
+        <p className="-mt-1 mb-5 text-[15px] leading-relaxed text-muted">{chapter.descriptionJa}</p>
       )}
 
       {items.length === 0 ? (
@@ -180,11 +287,13 @@ export function ChapterView() {
             group.length > 1 ? (
               <VariantCard key={group[0]!.id} variants={group} />
             ) : (
-              <PhraseRow key={group[0]!.id} item={group[0]!} />
+              <PhraseCard key={group[0]!.id} item={group[0]!} />
             ),
           )}
         </div>
       )}
+
+      <NowPlayingBar items={items} />
     </>
   );
 }
