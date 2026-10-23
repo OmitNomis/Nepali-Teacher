@@ -22,8 +22,11 @@ content. See README.md for setup, deploy, and the chapter JSON format.
   into `dist/` (only `better-sqlite3` stays external).
 - Hosting: a small home server (Intel Atom N280, **32-bit** Debian 12,
   1 GB RAM, shared with other services). systemd `nepali-teacher`
-  on 127.0.0.1:8797, reachable only on a private network over HTTPS
-  (HTTPS is required for mic recording and PWA install). 32-bit rules out
+  on 127.0.0.1:8797, public over HTTPS behind a reverse proxy.
+  Public on purpose: the learner
+  shouldn't need a VPN app; the app's own login is the gate, so keep the
+  login throttle and auth on every route. HTTPS is required for mic
+  recording and PWA install. 32-bit rules out
   Docker and caps Node at 20 (unofficial x86 build in `/opt/node20`), so the
   server is built with `tsup --target node20` and `better-sqlite3@12` is
   compiled on the box. Ship only `dist/`, `drizzle/`, `web/`; keep its
