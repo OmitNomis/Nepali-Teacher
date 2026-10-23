@@ -4,10 +4,10 @@ import { ArrowDown, ArrowUp, ChevronRight, FileUp, Library, Plus } from "lucide-
 import { useState } from "react";
 import { Link, useNavigate } from "react-router";
 import type { Track } from "@nt/shared";
-import { Badge, Button, Card, EmptyState, IconButton, PageHeader, PageLoader } from "../../components/ui";
+import { Badge, Button, EmptyState, HeaderButton, IconButton, List, PageHeader, PageLoader, SectionTitle } from "../../components/ui";
 import { client, unwrap, type ChapterSummary } from "../../lib/api";
 import { useChapters } from "../../lib/queries";
-import { ChapterSheet, ImportSheet, RecordingBadges, TRACK_OPTIONS } from "./forms";
+import { ChapterSheet, ImportSheet, RecordingMeter, TRACK_OPTIONS } from "./forms";
 
 function ChapterRow({
   chapter,
@@ -23,38 +23,39 @@ function ChapterRow({
   canDown: boolean;
 }) {
   const body = (
-    <Card className={clsx("flex items-center gap-3 p-4", chapter.archived && "opacity-55")}>
+    <div className={clsx("flex items-center gap-3 px-4 py-3.5", chapter.archived && "opacity-55")}>
       <div className="min-w-0 flex-1">
-        <p className="truncate font-extrabold">{chapter.titleJa}</p>
-        {chapter.titleNe && (
-          <p lang="ne" className="truncate text-sm text-muted">
-            {chapter.titleNe}
-          </p>
-        )}
-        <div className="mt-2 flex flex-wrap gap-1.5">
-          <Badge>{chapter.itemCount} items</Badge>
-          <RecordingBadges itemCount={chapter.itemCount} missing={chapter.missingAudio} tts={chapter.ttsAudio} />
+        <div className="flex items-center gap-2">
+          <p className="truncate font-bold">{chapter.titleJa}</p>
+          {chapter.titleNe && (
+            <p lang="ne" className="truncate text-sm text-muted">
+              {chapter.titleNe}
+            </p>
+          )}
           {chapter.archived && <Badge>Archived</Badge>}
+        </div>
+        <div className="mt-2">
+          <RecordingMeter itemCount={chapter.itemCount} missing={chapter.missingAudio} tts={chapter.ttsAudio} />
         </div>
       </div>
       {reordering ? (
-        <div className="flex flex-col">
-          <IconButton label="Move up" disabled={!canUp} onClick={() => onMove(-1)}>
+        <div className="-my-1 flex flex-col">
+          <IconButton label="Move up" className="size-9" disabled={!canUp} onClick={() => onMove(-1)}>
             <ArrowUp className="size-5" />
           </IconButton>
-          <IconButton label="Move down" disabled={!canDown} onClick={() => onMove(1)}>
+          <IconButton label="Move down" className="size-9" disabled={!canDown} onClick={() => onMove(1)}>
             <ArrowDown className="size-5" />
           </IconButton>
         </div>
       ) : (
-        <ChevronRight className="size-5 text-muted" />
+        <ChevronRight className="size-4 text-muted/70" />
       )}
-    </Card>
+    </div>
   );
   return reordering ? (
     body
   ) : (
-    <Link to={`/admin/chapters/${chapter.id}`} className="press block">
+    <Link to={`/admin/chapters/${chapter.id}`} className="block active:bg-surface-2">
       {body}
     </Link>
   );
@@ -92,18 +93,18 @@ export function AdminChapters() {
         title="Content"
         subtitle="Chapters, items and recordings"
         action={
-          <div className="flex gap-1">
-            <IconButton label="Import JSON" onClick={() => setImporting(true)}>
-              <FileUp className="size-5" />
-            </IconButton>
-            <IconButton label="New chapter" className="bg-brand text-brand-ink hover:bg-brand" onClick={() => setCreating(true)}>
+          <>
+            <HeaderButton label="Import JSON" onClick={() => setImporting(true)}>
+              <FileUp className="size-[18px]" />
+            </HeaderButton>
+            <HeaderButton label="New chapter" tone="brand" onClick={() => setCreating(true)}>
               <Plus className="size-5" />
-            </IconButton>
-          </div>
+            </HeaderButton>
+          </>
         }
       />
 
-      <div className="mb-5 flex gap-2">
+      <div className="mb-6 flex gap-2">
         <Button size="sm" variant={reordering ? "primary" : "secondary"} onClick={() => setReordering(!reordering)}>
           {reordering ? "Done" : "Reorder"}
         </Button>
@@ -126,18 +127,20 @@ export function AdminChapters() {
             const list = chapters.filter((c) => c.track === (track as Track));
             if (!list.length) return null;
             return (
-              <section key={track} className="flex flex-col gap-3">
-                <h2 className="px-1 text-sm font-extrabold tracking-wide text-muted uppercase">{label}</h2>
-                {list.map((c, i) => (
-                  <ChapterRow
-                    key={c.id}
-                    chapter={c}
-                    reordering={reordering}
-                    canUp={i > 0}
-                    canDown={i < list.length - 1}
-                    onMove={(dir) => move(list, i, dir)}
-                  />
-                ))}
+              <section key={track}>
+                <SectionTitle>{label}</SectionTitle>
+                <List>
+                  {list.map((c, i) => (
+                    <ChapterRow
+                      key={c.id}
+                      chapter={c}
+                      reordering={reordering}
+                      canUp={i > 0}
+                      canDown={i < list.length - 1}
+                      onMove={(dir) => move(list, i, dir)}
+                    />
+                  ))}
+                </List>
               </section>
             );
           })}

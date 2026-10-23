@@ -25,7 +25,7 @@ const variants: Record<Variant, string> = {
 
 const buttonClass = (variant: Variant, size: "sm" | "md" | "lg") =>
   clsx(
-    "press inline-flex items-center justify-center gap-2 rounded-full font-bold select-none",
+    "press inline-flex items-center justify-center gap-2 rounded-full font-bold whitespace-nowrap select-none",
     "disabled:opacity-40 disabled:pointer-events-none",
     size === "sm" && "h-9 px-4 text-[13px]",
     size === "md" && "h-12 px-6 text-[15px]",
@@ -94,6 +94,27 @@ export function IconButton({
       )}
       {...props}
     >
+      {children}
+    </button>
+  );
+}
+
+const headerButtonClass = (tone: "plain" | "brand") =>
+  clsx(
+    "press grid size-10 shrink-0 place-items-center rounded-full shadow-card",
+    tone === "brand" ? "bg-brand text-brand-ink" : "border border-line/70 bg-surface text-ink",
+  );
+
+/** Round button for the top bar of a page (same look as the back button). */
+export function HeaderButton({
+  label,
+  tone = "plain",
+  className,
+  children,
+  ...props
+}: ButtonHTMLAttributes<HTMLButtonElement> & { label: string; tone?: "plain" | "brand" }) {
+  return (
+    <button type="button" aria-label={label} title={label} className={clsx(headerButtonClass(tone), className)} {...props}>
       {children}
     </button>
   );
@@ -179,11 +200,7 @@ export function PageHeader({
       {(back || action) && (
         <div className="mb-3 flex h-10 items-center justify-between">
           {back ? (
-            <Link
-              to={back}
-              aria-label="Back"
-              className="press -ml-1 grid size-10 place-items-center rounded-full border border-line/70 bg-surface shadow-card"
-            >
+            <Link to={back} aria-label="Back" className={clsx(headerButtonClass("plain"), "-ml-1")}>
               <ChevronLeft className="size-5" />
             </Link>
           ) : (

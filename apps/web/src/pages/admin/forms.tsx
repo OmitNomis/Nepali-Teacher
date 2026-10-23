@@ -3,19 +3,32 @@ import { Archive, ArchiveRestore, ArrowDown, ArrowUp, FileUp, MicOff } from "luc
 import { useEffect, useRef, useState } from "react";
 import { chapterFile, type ItemKind, type Register, type Track } from "@nt/shared";
 import { REGISTER_INFO, REGISTER_ORDER } from "../../lib/registers";
-import { Badge, Button, Field, Segmented, Sheet, TextArea, TextInput, useToast } from "../../components/ui";
+import { Button, Field, Segmented, Sheet, TextArea, TextInput, useToast } from "../../components/ui";
 import { client, unwrap, type ChapterDetail, type Item } from "../../lib/api";
 
-/** "3 to record · 2 TTS" style status for a set of items. */
-export function RecordingBadges({ itemCount, missing, tts }: { itemCount: number; missing: number; tts: number }) {
-  const toRecord = missing + tts;
-  if (itemCount === 0) return null;
-  if (toRecord === 0) return <Badge tone="ok">All recorded</Badge>;
+/** Bar + caption showing how much of a set of items has a real recording. */
+export function RecordingMeter({ itemCount, missing, tts }: { itemCount: number; missing: number; tts: number }) {
+  if (itemCount === 0) return <p className="text-xs text-muted">Empty</p>;
+  const recorded = itemCount - missing - tts;
+  const pct = (n: number) => `${(n / itemCount) * 100}%`;
   return (
-    <>
-      <Badge tone="gold">{toRecord} to record</Badge>
-      {tts > 0 && <Badge tone="indigo">{tts} TTS</Badge>}
-    </>
+    <div className="flex flex-col gap-1.5">
+      <div className="flex h-1.5 overflow-hidden rounded-full bg-surface-2">
+        <div className="bg-ok transition-[width] duration-500" style={{ width: pct(recorded) }} />
+        <div className="bg-indigo/40 transition-[width] duration-500" style={{ width: pct(tts) }} />
+      </div>
+      <p className="text-xs text-muted">
+        {recorded === itemCount ? (
+          <span className="font-bold text-ok">All {itemCount} recorded</span>
+        ) : (
+          <>
+            <span className="font-bold text-ink">{recorded}</span> / {itemCount} recorded
+            {tts > 0 && ` · ${tts} TTS`}
+            {missing > 0 && ` · ${missing} silent`}
+          </>
+        )}
+      </p>
+    </div>
   );
 }
 
