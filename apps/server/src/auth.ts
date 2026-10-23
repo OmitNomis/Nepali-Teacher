@@ -93,6 +93,15 @@ export async function findUserByLogin(db: Db, username: string, password: string
   return toPublic(user);
 }
 
+/**
+ * Client IP for rate limiting. Only the last X-Forwarded-For hop is trusted:
+ * it's the one our own proxy (tailscale serve/funnel, Caddy) appended, while
+ * anything before it was sent by the client and can be forged.
+ */
+export function clientIp(forwardedFor: string | undefined) {
+  return forwardedFor?.split(",").at(-1)?.trim() || "local";
+}
+
 /** Tiny in-memory brute-force guard: N failures per key per window. */
 export class LoginThrottle {
   private failures = new Map<string, { count: number; resetAt: number }>();

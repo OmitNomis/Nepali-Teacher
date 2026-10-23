@@ -5,10 +5,12 @@ import { serveStatic } from "@hono/node-server/serve-static";
 import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
+import { secureHeaders } from "hono/secure-headers";
 import { chapterFile, chapterInput, chapterPatch, itemInput, itemPatch, loginInput, reorderInput } from "@nt/shared";
 import { deleteItemAudio, getAudio, isSupportedAudio, MAX_AUDIO_BYTES, saveItemAudio } from "./audio";
 import {
   type AppEnv,
+  clientIp,
   createSession,
   destroySession,
   findUserByLogin,
@@ -46,7 +48,7 @@ export function createApp(db: Db, config: Config) {
   const auth = new Hono<AppEnv>()
     .get("/me", (c) => c.json({ user: sessionUser(c, db) }))
     .post("/login", zValidator("json", loginInput), async (c) => {
-      const key = c.req.header("x-forwarded-for")?.split(",")[0]?.trim() ?? "local";
+      const key = clientIp(c.req.header("x-forwarded-for"));
       if (throttle.blocked(key)) {
         throw new HTTPException(429, { message: "Too many attempts, try again later" });
       }
@@ -171,6 +173,7 @@ export function createApp(db: Db, config: Config) {
   const api = new Hono<AppEnv>().route("/auth", auth).route("/", content);
 
   const app = new Hono()
+    .use("*", secureHeaders())
     .route("/api", api)
     .onError((err, c) => {
       if (err instanceof HTTPException) return c.json({ error: err.message }, err.status);
