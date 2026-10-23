@@ -21,6 +21,6 @@ console.log(tts ? `TTS: ${config.tts.provider} (${config.tts.voice})` : "TTS: of
 pruneSessions(db);
 setInterval(() => pruneSessions(db), 6 * 60 * 60 * 1000).unref();
 
-serve({ fetch: createApp(db, config).fetch, port: config.port }, (info) => {
-  console.log(`NepaliTeacher server on http://localhost:${info.port}`);
+serve({ fetch: createApp(db, config).fetch, port: config.port, hostname: config.host }, (info) => {
+  console.log(`NepaliTeacher server on http://${config.host ?? "localhost"}:${info.port}`);
 });

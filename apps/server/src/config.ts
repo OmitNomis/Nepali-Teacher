@@ -10,6 +10,8 @@ export function loadConfig(env = process.env) {
   const dataDir = path.resolve(env.DATA_DIR ?? "./data");
   return {
     port: Number(env.PORT ?? 8787),
+    // e.g. 127.0.0.1 behind a local proxy; unset listens on all interfaces (Docker)
+    host: env.HOST,
     dataDir,
     dbFile: path.join(dataDir, "app.db"),
     audioDir: path.join(dataDir, "audio"),
