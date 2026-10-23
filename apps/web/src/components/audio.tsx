@@ -131,11 +131,11 @@ export function RecordButton({ itemId, hasAudio }: { itemId: string; hasAudio: b
 function LevelBars({ level, active }: { level: number; active: boolean }) {
   const shape = [0.45, 0.75, 1, 0.75, 0.45];
   return (
-    <div className="flex h-10 items-center justify-center gap-1.5" aria-hidden>
+    <div className="flex h-8 items-center justify-center gap-1" aria-hidden>
       {shape.map((s, i) => (
         <span
           key={i}
-          className={clsx("w-1.5 rounded-full transition-[height] duration-75", active ? "bg-brand" : "bg-line")}
+          className={clsx("w-1 rounded-full transition-[height] duration-75", active ? "bg-brand" : "bg-line")}
           style={{ height: `${Math.max(14, active ? level * s * 100 : 14)}%` }}
         />
       ))}
@@ -165,10 +165,12 @@ export function StudioRecorder({ itemId, onSaved }: { itemId: string; onSaved: (
   const recorded = rec.state === "recorded";
 
   return (
-    <div className="flex flex-col items-center gap-5">
-      <LevelBars level={rec.level} active={recording} />
-      <div className="h-5 text-sm font-bold text-muted tabular-nums">
+    <div className="flex flex-col items-center gap-3">
+      {/* level meter and status share one line to keep the recorder compact */}
+      <div className="flex h-8 items-center justify-center gap-3 text-sm font-bold text-muted tabular-nums">
+        {recording && <LevelBars level={rec.level} active />}
         {recording ? fmt(rec.elapsed) : recorded ? "Listen back, then save" : rec.error ?? "Tap to record"}
+        {recording && <LevelBars level={rec.level} active />}
       </div>
 
       {!recorded ? (
@@ -178,11 +180,11 @@ export function StudioRecorder({ itemId, onSaved }: { itemId: string; onSaved: (
           onClick={() => (recording ? rec.stop() : void rec.start())}
           disabled={rec.state === "starting"}
           className={clsx(
-            "press grid size-24 place-items-center rounded-full bg-brand text-brand-ink shadow-card",
+            "press grid size-20 place-items-center rounded-full bg-brand text-brand-ink shadow-lift",
             recording && "animate-ring",
           )}
         >
-          {recording ? <Square className="size-9" fill="currentColor" /> : <Mic className="size-10" />}
+          {recording ? <Square className="size-8" fill="currentColor" /> : <Mic className="size-9" />}
         </button>
       ) : (
         <div className="flex w-full items-center justify-center gap-4">
@@ -192,7 +194,7 @@ export function StudioRecorder({ itemId, onSaved }: { itemId: string; onSaved: (
               stop();
               rec.reset();
             }}
-            className="press flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl border border-line bg-surface font-bold"
+            className="press flex h-14 flex-1 items-center justify-center gap-2 rounded-full border border-line bg-surface font-bold shadow-card"
           >
             <RotateCcw className="size-5" /> Redo
           </button>
@@ -204,7 +206,7 @@ export function StudioRecorder({ itemId, onSaved }: { itemId: string; onSaved: (
               stop();
               if (rec.blob) save.mutate(rec.blob);
             }}
-            className="press flex h-14 flex-1 items-center justify-center gap-2 rounded-2xl bg-ok font-bold text-white shadow-card disabled:opacity-60"
+            className="press flex h-14 flex-1 items-center justify-center gap-2 rounded-full bg-ok font-bold text-white shadow-card disabled:opacity-60"
           >
             {save.isPending ? <LoaderCircle className="size-5 animate-spin" /> : "Save"}
           </button>
