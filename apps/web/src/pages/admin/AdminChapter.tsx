@@ -4,22 +4,33 @@ import { Archive, ArchiveRestore, AudioLines, Download, Eye, ListPlus, Pencil, P
 import { useState } from "react";
 import { useParams } from "react-router";
 import { PlayButton, RecordButton } from "../../components/audio";
-import { Badge, Button, Card, EmptyState, IconButton, LinkButton, PageHeader, PageLoader, useToast } from "../../components/ui";
+import {
+  Badge,
+  Button,
+  Card,
+  EmptyState,
+  HeaderButton,
+  LinkButton,
+  List,
+  PageHeader,
+  PageLoader,
+  useToast,
+} from "../../components/ui";
 import { client, unwrap, type Item } from "../../lib/api";
 import { useChapter, useTtsStatus } from "../../lib/queries";
 import { REGISTER_INFO } from "../../lib/registers";
-import { ChapterSheet, ItemSheet, RecordingBadges } from "./forms";
+import { ChapterSheet, ItemSheet, RecordingMeter } from "./forms";
 
 function ItemRow({ item, index, onEdit }: { item: Item; index: number; onEdit: () => void }) {
   return (
-    <Card className={clsx("flex items-center gap-3 py-3 pr-3 pl-4", item.archived && "opacity-55")}>
+    <div className={clsx("flex items-center gap-2 py-2.5 pr-3 pl-3", item.archived && "opacity-55")}>
       <button type="button" onClick={onEdit} className="press flex min-w-0 flex-1 items-center gap-3 text-left">
         <span className="w-5 shrink-0 text-right text-xs font-bold text-muted tabular-nums">{index + 1}</span>
         <div className="min-w-0 flex-1">
-          <p lang="ne" className="truncate text-xl font-semibold">
+          <p lang="ne" className="truncate text-[19px] font-medium">
             {item.ne}
           </p>
-          <p className="flex items-center gap-1.5 truncate text-sm text-muted">
+          <p className="flex items-center gap-1.5 truncate text-[13px] text-muted">
             {item.register && <Badge tone="brand">{REGISTER_INFO[item.register].pronoun}</Badge>}
             {item.audioSource === "tts" && <Badge tone="indigo">TTS</Badge>}
             <span className="truncate">
@@ -34,7 +45,7 @@ function ItemRow({ item, index, onEdit }: { item: Item; index: number; onEdit: (
           <RecordButton itemId={item.id} hasAudio={item.audioSource === "recording"} />
         </>
       )}
-    </Card>
+    </div>
   );
 }
 
@@ -95,20 +106,22 @@ export function AdminChapter() {
         title={chapter.titleJa}
         subtitle={chapter.titleNe ? <span lang="ne">{chapter.titleNe}</span> : undefined}
         action={
-          <IconButton label="Edit chapter" onClick={() => setEditingChapter(true)}>
-            <Pencil className="size-5" />
-          </IconButton>
+          <HeaderButton label="Edit chapter" onClick={() => setEditingChapter(true)}>
+            <Pencil className="size-[18px]" />
+          </HeaderButton>
         }
       />
 
-      <div className="mb-4 flex flex-wrap items-center gap-2">
-        <Badge tone="indigo">{chapter.track === "script" ? "Script" : "Phrases"}</Badge>
-        <Badge>{active.length} items</Badge>
-        <RecordingBadges itemCount={active.length} missing={missing} tts={tts} />
-        {chapter.archived && <Badge tone="brand">Archived</Badge>}
-      </div>
+      <Card className="mb-4 p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <Badge tone="indigo">{chapter.track === "script" ? "Script" : "Phrases"}</Badge>
+          <Badge>{active.length} items</Badge>
+          {chapter.archived && <Badge tone="brand">Archived</Badge>}
+        </div>
+        <RecordingMeter itemCount={active.length} missing={missing} tts={tts} />
+      </Card>
 
-      <div className="no-scrollbar -mx-4 mb-5 flex gap-2 overflow-x-auto px-4">
+      <div className="no-scrollbar -mx-4 mb-5 flex gap-2 overflow-x-auto px-4 py-1">
         <LinkButton to={`/chapters/${chapter.id}`} size="sm">
           <Eye className="size-4" /> Preview
         </LinkButton>
@@ -135,11 +148,11 @@ export function AdminChapter() {
           Add letters, words or phrases, then record them right here.
         </EmptyState>
       ) : (
-        <div className="flex flex-col gap-2.5">
+        <List>
           {active.map((item, i) => (
             <ItemRow key={item.id} item={item} index={i} onEdit={() => setItemSheet({ item })} />
           ))}
-        </div>
+        </List>
       )}
 
       {archived.length > 0 && (
@@ -147,11 +160,11 @@ export function AdminChapter() {
           <summary className="cursor-pointer px-1 text-sm font-extrabold text-muted">
             Archived ({archived.length})
           </summary>
-          <div className="mt-3 flex flex-col gap-2.5">
+          <List className="mt-3">
             {archived.map((item, i) => (
               <ItemRow key={item.id} item={item} index={i} onEdit={() => setItemSheet({ item })} />
             ))}
-          </div>
+          </List>
         </details>
       )}
 
@@ -159,9 +172,9 @@ export function AdminChapter() {
         type="button"
         aria-label="Add item"
         onClick={() => setItemSheet({})}
-        className="press fixed right-5 bottom-[calc(env(safe-area-inset-bottom)+5.5rem)] z-30 grid size-16 place-items-center rounded-full bg-brand text-brand-ink shadow-card sm:right-[max(1.25rem,calc(50vw-20rem))]"
+        className="press fixed right-5 bottom-[calc(max(env(safe-area-inset-bottom),0.75rem)+5rem)] z-30 grid size-14 place-items-center rounded-full bg-brand text-brand-ink shadow-lift sm:right-[max(1.25rem,calc(50vw-20rem))]"
       >
-        <Plus className="size-8" />
+        <Plus className="size-7" />
       </button>
 
       <ChapterSheet open={editingChapter} onClose={() => setEditingChapter(false)} chapter={chapter} />
