@@ -20,8 +20,16 @@ content. See README.md for setup, deploy, and the chapter JSON format.
 - Stack: pnpm workspace; Hono + SQLite/Drizzle server with an in-process job
   runner; Vite/React/Tailwind PWA; shared zod schemas. Server is bundled by tsup
   into `dist/` (only `better-sqlite3` stays external).
-- Hosting: a small VPS (RackNerd) with Docker + Caddy. Data lives in `./data`
-  (bind mount). Off-server backups are still TODO and matter before real use.
+- Hosting: a small home server (Intel Atom N280, **32-bit** Debian 12,
+  1 GB RAM, shared with other services). systemd `nepali-teacher`
+  on 127.0.0.1:8797, reachable only on a private network over HTTPS
+  (HTTPS is required for mic recording and PWA install). 32-bit rules out
+  Docker and caps Node at 20 (unofficial x86 build in `/opt/node20`), so the
+  server is built with `tsup --target node20` and `better-sqlite3@12` is
+  compiled on the box. Ship only `dist/`, `drizzle/`, `web/`; keep its
+  `node_modules`. Accounts: `nepali-user <name> <admin|learner> [display]`.
+  Data in `/var/lib/nepali-teacher`. The Docker + Caddy VPS setup in the
+  README still works as an alternative. Off-server backups are still TODO.
 - Item IDs must never change: review history hangs off them. Archive, don't delete.
 - Politeness tiers (तपाईं / तिमी / तँ) are separate items with `register` plus a
   shared `group`, shown to the learner as one card with 丁寧 / タメ口 / ぞんざい chips.
