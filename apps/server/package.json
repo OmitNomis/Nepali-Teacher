@@ -12,7 +12,8 @@
     "typecheck": "tsc -p .",
     "test": "vitest run",
     "db:generate": "drizzle-kit generate",
-    "user:create": "tsx src/cli/create-user.ts"
+    "user:create": "tsx src/cli/create-user.ts",
+    "chapter:import": "tsx src/cli/import-chapter.ts"
   },
   "dependencies": {
     "@hono/node-server": "^2.1.4",
@@ -22,6 +23,7 @@
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.13",
     "msedge-tts": "^2.1.0",
+    "ts-fsrs": "^5.4.2",
     "zod": "^4.6.6"
   },
   "devDependencies": {

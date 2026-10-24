@@ -1,7 +1,7 @@
 import { defineConfig } from "tsup";
 
 export default defineConfig({
-  entry: ["src/main.ts", "src/cli/create-user.ts"],
+  entry: ["src/main.ts", "src/cli/create-user.ts", "src/cli/import-chapter.ts"],
   format: "esm",
   platform: "node",
   target: "node22",

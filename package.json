@@ -8,7 +8,8 @@
     "typecheck": "pnpm -r typecheck",
     "test": "pnpm -r test",
     "user:create": "pnpm --filter @nt/server user:create",
-    "db:generate": "pnpm --filter @nt/server db:generate"
+    "db:generate": "pnpm --filter @nt/server db:generate",
+    "chapter:import": "pnpm --filter @nt/server chapter:import"
   },
   "packageManager": "pnpm@11.17.0"
 }
