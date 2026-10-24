@@ -1,6 +1,6 @@
 import { sql } from "drizzle-orm";
-import { index, integer, sqliteTable, text } from "drizzle-orm/sqlite-core";
-import { ITEM_KINDS, REGISTERS, ROLES, TRACKS } from "@nt/shared";
+import { index, integer, real, sqliteTable, text, uniqueIndex } from "drizzle-orm/sqlite-core";
+import { CARD_TYPES, ITEM_KINDS, REGISTERS, ROLES, TRACKS } from "@nt/shared";
 
 const createdAt = () =>
   integer("created_at", { mode: "timestamp_ms" })
@@ -102,8 +102,69 @@ export const jobs = sqliteTable(
   (t) => [index("jobs_pending_idx").on(t.status, t.runAt)],
 );
 
+// FSRS memory state shared by cards and review logs (field names follow ts-fsrs)
+const fsrsState = () => ({
+  due: integer("due", { mode: "timestamp_ms" }).notNull(),
+  stability: real("stability").notNull(),
+  difficulty: real("difficulty").notNull(),
+  elapsedDays: integer("elapsed_days").notNull(),
+  scheduledDays: integer("scheduled_days").notNull(),
+  learningSteps: integer("learning_steps").notNull(),
+  // ts-fsrs State: 0 new, 1 learning, 2 review, 3 relearning
+  state: integer("state").notNull(),
+});
+
+/**
+ * One review card per user, item and card type. Created on the first answer,
+ * so an item without a card is "new" for that user. Hangs off the item id,
+ * which is why item ids must never change.
+ */
+export const cards = sqliteTable(
+  "cards",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    userId: integer("user_id")
+      .notNull()
+      .references(() => users.id, { onDelete: "cascade" }),
+    itemId: text("item_id")
+      .notNull()
+      .references(() => items.id, { onDelete: "cascade" }),
+    type: text("type", { enum: CARD_TYPES }).notNull(),
+    ...fsrsState(),
+    reps: integer("reps").notNull(),
+    lapses: integer("lapses").notNull(),
+    lastReview: integer("last_review", { mode: "timestamp_ms" }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("cards_user_item_type_idx").on(t.userId, t.itemId, t.type),
+    index("cards_user_due_idx").on(t.userId, t.due),
+  ],
+);
+
+export const reviewLogs = sqliteTable(
+  "review_logs",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    cardId: integer("card_id")
+      .notNull()
+      .references(() => cards.id, { onDelete: "cascade" }),
+    // ts-fsrs Rating: 1 again, 2 hard, 3 good, 4 easy
+    rating: integer("rating").notNull(),
+    ...fsrsState(),
+    lastElapsedDays: integer("last_elapsed_days").notNull(),
+    review: integer("review", { mode: "timestamp_ms" }).notNull(),
+    // what the learner actually picked, to spot letters she confuses
+    chosenItemId: text("chosen_item_id"),
+    correct: integer("correct", { mode: "boolean" }).notNull(),
+    durationMs: integer("duration_ms"),
+  },
+  (t) => [index("review_logs_card_idx").on(t.cardId, t.review)],
+);
+
 export type User = typeof users.$inferSelect;
 export type Chapter = typeof chapters.$inferSelect;
 export type Item = typeof items.$inferSelect;
 export type Audio = typeof audio.$inferSelect;
 export type Job = typeof jobs.$inferSelect;
+export type CardRow = typeof cards.$inferSelect;

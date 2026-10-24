@@ -91,3 +91,36 @@ export const loginInput = z.object({
   username: text.min(1).max(100),
   password: z.string().min(1).max(200),
 });
+
+/**
+ * Review card types for script items:
+ * listen = hear the sound, pick the letter; read = see the letter, pick the sound.
+ */
+export const CARD_TYPES = ["listen", "read"] as const;
+export type CardType = (typeof CARD_TYPES)[number];
+
+export const reviewAnswer = z.object({
+  itemId: z.string().min(1),
+  type: z.enum(CARD_TYPES),
+  chosenItemId: z.string().min(1),
+  durationMs: z.number().int().nonnegative().max(3_600_000).optional(),
+});
+export type ReviewAnswer = z.infer<typeof reviewAnswer>;
+
+// Spoken Nepali doesn't distinguish vowel length or the three sibilants, and
+// ण is usually said like न. Letters that only differ in these sound the same,
+// so they're never offered as each other's wrong answers, and picking one for
+// the other counts as right.
+const SAME_SOUND: [RegExp, string][] = [
+  [/ई/g, "इ"],
+  [/ऊ/g, "उ"],
+  [/ी/g, "ि"],
+  [/ू/g, "ु"],
+  [/[शष]/g, "स"],
+  [/ण/g, "न"],
+];
+
+/** Key that's equal for letters (or syllables) that sound the same. */
+export function soundKey(ne: string) {
+  return SAME_SOUND.reduce((s, [re, to]) => s.replace(re, to), ne.trim());
+}
