@@ -6,7 +6,16 @@ import { zValidator } from "@hono/zod-validator";
 import { Hono } from "hono";
 import { HTTPException } from "hono/http-exception";
 import { secureHeaders } from "hono/secure-headers";
-import { chapterFile, chapterInput, chapterPatch, itemInput, itemPatch, loginInput, reorderInput } from "@nt/shared";
+import {
+  chapterFile,
+  chapterInput,
+  chapterPatch,
+  itemInput,
+  itemPatch,
+  loginInput,
+  reorderInput,
+  reviewAnswer,
+} from "@nt/shared";
 import { deleteItemAudio, getAudio, isSupportedAudio, MAX_AUDIO_BYTES, saveItemAudio } from "./audio";
 import {
   type AppEnv,
@@ -36,6 +45,7 @@ import {
   updateItem,
 } from "./content";
 import type { Db } from "./db";
+import { answerCard, buildSession, reviewSummary } from "./srs";
 import { queueTts } from "./tts";
 
 export function createApp(db: Db, config: Config) {
@@ -103,6 +113,13 @@ export function createApp(db: Db, config: Config) {
       const chapter = getChapter(db, c.req.param("id"), { includeArchived: false });
       return c.json({ queued: queueTts(db, chapter.items.map((i) => i.id)) });
     })
+    .get("/review/summary", anyUser, (c) => c.json(reviewSummary(db, c.get("user").id)))
+    .get("/review/session", anyUser, (c) =>
+      c.json(buildSession(db, c.get("user").id, { chapterId: c.req.query("chapter") || undefined })),
+    )
+    .post("/review/answer", anyUser, zValidator("json", reviewAnswer), (c) =>
+      c.json(answerCard(db, c.get("user").id, c.req.valid("json"))),
+    )
     .get("/tts", admin, (c) =>
       c.json({ provider: ttsOn ? config.tts.provider : null, voice: config.tts.voice }),
     )
