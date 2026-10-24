@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "chapter": {
+    "id": "vowels",
+    "track": "script",
+    "titleJa": "母音",
+    "titleNe": "स्वर",
+    "descriptionJa": "ネパール語の母音、13文字。タップして音を聞いてみよう。",
+    "items": [
+      { "id": "v-a", "kind": "letter", "ne": "अ", "roman": "a" },
+      { "id": "v-aa", "kind": "letter", "ne": "आ", "roman": "ā" },
+      { "id": "v-i", "kind": "letter", "ne": "इ", "roman": "i" },
+      { "id": "v-ii", "kind": "letter", "ne": "ई", "roman": "ī" },
+      { "id": "v-u", "kind": "letter", "ne": "उ", "roman": "u" },
+      { "id": "v-uu", "kind": "letter", "ne": "ऊ", "roman": "ū" },
+      { "id": "v-ri", "kind": "letter", "ne": "ऋ", "roman": "ri" },
+      { "id": "v-e", "kind": "letter", "ne": "ए", "roman": "e" },
+      { "id": "v-ai", "kind": "letter", "ne": "ऐ", "roman": "ai" },
+      { "id": "v-o", "kind": "letter", "ne": "ओ", "roman": "o" },
+      { "id": "v-au", "kind": "letter", "ne": "औ", "roman": "au" },
+      { "id": "v-am", "kind": "letter", "ne": "अं", "roman": "aṃ" },
+      { "id": "v-ah", "kind": "letter", "ne": "अः", "roman": "aḥ" }
+    ]
+  }
+}

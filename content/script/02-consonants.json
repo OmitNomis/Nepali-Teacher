@@ -1,0 +1,55 @@
+{
+  "version": 1,
+  "chapter": {
+    "id": "consonants",
+    "track": "script",
+    "titleJa": "子音",
+    "titleNe": "व्यञ्जन",
+    "descriptionJa": "ネパール語の子音、36文字。5文字ずつのグループで、口の奥から前へと並んでいます。",
+    "items": [
+      { "id": "c-ka", "kind": "letter", "ne": "क", "roman": "ka" },
+      { "id": "c-kha", "kind": "letter", "ne": "ख", "roman": "kha" },
+      { "id": "c-ga", "kind": "letter", "ne": "ग", "roman": "ga" },
+      { "id": "c-gha", "kind": "letter", "ne": "घ", "roman": "gha" },
+      { "id": "c-nga", "kind": "letter", "ne": "ङ", "roman": "ṅa" },
+
+      { "id": "c-cha", "kind": "letter", "ne": "च", "roman": "cha" },
+      { "id": "c-chha", "kind": "letter", "ne": "छ", "roman": "chha" },
+      { "id": "c-ja", "kind": "letter", "ne": "ज", "roman": "ja" },
+      { "id": "c-jha", "kind": "letter", "ne": "झ", "roman": "jha" },
+      { "id": "c-nya", "kind": "letter", "ne": "ञ", "roman": "ña" },
+
+      { "id": "c-tta", "kind": "letter", "ne": "ट", "roman": "ṭa" },
+      { "id": "c-ttha", "kind": "letter", "ne": "ठ", "roman": "ṭha" },
+      { "id": "c-dda", "kind": "letter", "ne": "ड", "roman": "ḍa" },
+      { "id": "c-ddha", "kind": "letter", "ne": "ढ", "roman": "ḍha" },
+      { "id": "c-nna", "kind": "letter", "ne": "ण", "roman": "ṇa" },
+
+      { "id": "c-ta", "kind": "letter", "ne": "त", "roman": "ta" },
+      { "id": "c-tha", "kind": "letter", "ne": "थ", "roman": "tha" },
+      { "id": "c-da", "kind": "letter", "ne": "द", "roman": "da" },
+      { "id": "c-dha", "kind": "letter", "ne": "ध", "roman": "dha" },
+      { "id": "c-na", "kind": "letter", "ne": "न", "roman": "na" },
+
+      { "id": "c-pa", "kind": "letter", "ne": "प", "roman": "pa" },
+      { "id": "c-pha", "kind": "letter", "ne": "फ", "roman": "pha" },
+      { "id": "c-ba", "kind": "letter", "ne": "ब", "roman": "ba" },
+      { "id": "c-bha", "kind": "letter", "ne": "भ", "roman": "bha" },
+      { "id": "c-ma", "kind": "letter", "ne": "म", "roman": "ma" },
+
+      { "id": "c-ya", "kind": "letter", "ne": "य", "roman": "ya" },
+      { "id": "c-ra", "kind": "letter", "ne": "र", "roman": "ra" },
+      { "id": "c-la", "kind": "letter", "ne": "ल", "roman": "la" },
+      { "id": "c-wa", "kind": "letter", "ne": "व", "roman": "wa" },
+
+      { "id": "c-sha", "kind": "letter", "ne": "श", "roman": "śa" },
+      { "id": "c-ssa", "kind": "letter", "ne": "ष", "roman": "ṣa" },
+      { "id": "c-sa", "kind": "letter", "ne": "स", "roman": "sa" },
+      { "id": "c-ha", "kind": "letter", "ne": "ह", "roman": "ha" },
+
+      { "id": "c-ksha", "kind": "letter", "ne": "क्ष", "roman": "kṣa" },
+      { "id": "c-tra", "kind": "letter", "ne": "त्र", "roman": "tra" },
+      { "id": "c-gya", "kind": "letter", "ne": "ज्ञ", "roman": "gya" }
+    ]
+  }
+}

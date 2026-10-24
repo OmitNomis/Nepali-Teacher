@@ -1,0 +1,24 @@
+{
+  "version": 1,
+  "chapter": {
+    "id": "barakhari-ka",
+    "track": "script",
+    "titleJa": "バーラカリ（क）",
+    "titleNe": "बाह्रखरी",
+    "descriptionJa": "子音に母音の記号（マートラー）がつくと、音が変わります。まずは क で12通りを覚えよう。",
+    "items": [
+      { "id": "bk-ka", "kind": "letter", "ne": "क", "roman": "ka" },
+      { "id": "bk-kaa", "kind": "letter", "ne": "का", "roman": "kā" },
+      { "id": "bk-ki", "kind": "letter", "ne": "कि", "roman": "ki" },
+      { "id": "bk-kii", "kind": "letter", "ne": "की", "roman": "kī" },
+      { "id": "bk-ku", "kind": "letter", "ne": "कु", "roman": "ku" },
+      { "id": "bk-kuu", "kind": "letter", "ne": "कू", "roman": "kū" },
+      { "id": "bk-ke", "kind": "letter", "ne": "के", "roman": "ke" },
+      { "id": "bk-kai", "kind": "letter", "ne": "कै", "roman": "kai" },
+      { "id": "bk-ko", "kind": "letter", "ne": "को", "roman": "ko" },
+      { "id": "bk-kau", "kind": "letter", "ne": "कौ", "roman": "kau" },
+      { "id": "bk-kam", "kind": "letter", "ne": "कं", "roman": "kaṃ" },
+      { "id": "bk-kah", "kind": "letter", "ne": "कः", "roman": "kaḥ" }
+    ]
+  }
+}
