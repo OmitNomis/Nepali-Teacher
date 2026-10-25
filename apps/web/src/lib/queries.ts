@@ -32,3 +32,19 @@ export const useMissingAudio = () =>
     queryKey: ["missing-audio"],
     queryFn: () => unwrap(client.items["missing-audio"].$get()),
   });
+
+export const useReviewSummary = () =>
+  useQuery({
+    queryKey: ["review-summary"],
+    queryFn: () => unwrap(client.review.summary.$get()),
+  });
+
+/** A quiz session is a snapshot: never refetched while she's answering it. */
+export const useReviewSession = (chapterId?: string) =>
+  useQuery({
+    queryKey: ["review-session", chapterId ?? null],
+    queryFn: () => unwrap(client.review.session.$get({ query: chapterId ? { chapter: chapterId } : {} })),
+    staleTime: Infinity,
+    gcTime: 0,
+    refetchOnWindowFocus: false,
+  });

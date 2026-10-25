@@ -8,9 +8,12 @@ import { RecordQueue } from "./pages/admin/RecordQueue";
 import { Account } from "./pages/Account";
 import { ChapterView } from "./pages/learn/ChapterView";
 import { Home } from "./pages/learn/Home";
+import { Review } from "./pages/learn/Review";
 import { Login } from "./pages/Login";
 
 const router = createBrowserRouter([
+  // full-screen, no tab bar: a quiz is a focused moment
+  { path: "/review", element: <Review /> },
   {
     element: <Shell />,
     children: [
