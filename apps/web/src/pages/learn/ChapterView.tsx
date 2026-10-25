@@ -1,7 +1,7 @@
 import clsx from "clsx";
-import { Headphones, Lightbulb, Play, Square, Volume2, X } from "lucide-react";
+import { Headphones, Lightbulb, Play, Square, Volume2, X, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
-import { useParams } from "react-router";
+import { Link, useParams } from "react-router";
 import { EqBars } from "../../components/audio";
 import { EmptyState, PageHeader, PageLoader } from "../../components/ui";
 import type { Item } from "../../lib/api";
@@ -248,24 +248,34 @@ export function ChapterView() {
         subtitle={chapter.titleNe ? <span lang="ne">{chapter.titleNe}</span> : undefined}
         action={
           urls.length > 1 && (
-            <button
-              type="button"
-              onClick={() => (queueActive ? stop() : playAll(urls))}
-              className={clsx(
-                "press flex h-10 items-center gap-1.5 rounded-full px-4 text-[13px] font-bold shadow-card",
-                queueActive ? "bg-ink text-bg" : "bg-brand text-brand-ink",
+            <>
+              {isScript && (
+                <Link
+                  to={`/review?chapter=${encodeURIComponent(chapter.id)}`}
+                  className="press flex h-10 items-center gap-1.5 rounded-full border border-line/70 bg-surface px-4 text-[13px] font-bold shadow-card"
+                >
+                  <Zap className="size-4 text-gold" fill="currentColor" /> クイズ
+                </Link>
               )}
-            >
-              {queueActive ? (
-                <>
-                  <Square className="size-3.5" fill="currentColor" /> 停止
-                </>
-              ) : (
-                <>
-                  <Play className="size-4" fill="currentColor" /> 全部聞く
-                </>
-              )}
-            </button>
+              <button
+                type="button"
+                onClick={() => (queueActive ? stop() : playAll(urls))}
+                className={clsx(
+                  "press flex h-10 items-center gap-1.5 rounded-full px-4 text-[13px] font-bold shadow-card",
+                  queueActive ? "bg-ink text-bg" : "bg-brand text-brand-ink",
+                )}
+              >
+                {queueActive ? (
+                  <>
+                    <Square className="size-3.5" fill="currentColor" /> 停止
+                  </>
+                ) : (
+                  <>
+                    <Play className="size-4" fill="currentColor" /> 全部聞く
+                  </>
+                )}
+              </button>
+            </>
           )
         }
       />
