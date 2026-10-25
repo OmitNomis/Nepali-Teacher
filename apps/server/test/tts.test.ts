@@ -22,7 +22,7 @@ beforeEach(() => {
 });
 
 const add = (ne: string) => createItem(db, chapterId, { kind: "phrase", ne, ja: "", roman: "", note: "" });
-const fakeProvider: TtsProvider = async (text) => Buffer.from(`mp3:${text}`);
+const fakeProvider: TtsProvider = async (text, voice) => ({ audio: Buffer.from(`mp3:${text}`), voice });
 const pendingJobs = () => db.select().from(jobs).where(eq(jobs.type, TTS_JOB)).all();
 
 describe("queueTts", () => {
@@ -50,7 +50,7 @@ describe("ttsJob", () => {
       // simulate a recording being saved while TTS is in flight
       const { saveItemAudio } = await import("../src/audio");
       await saveItemAudio(db, config, a.id, new File([new Uint8Array(10)], "r.m4a", { type: "audio/mp4" }), 1);
-      return Buffer.from(text);
+      return { audio: Buffer.from(text), voice: "v" };
     };
     await ttsJob(db, config, slowProvider)({ itemId: a.id });
     expect(getItem(db, a.id).audioSource).toBe("recording");
@@ -60,7 +60,7 @@ describe("ttsJob", () => {
     const a = add("खाना");
     const editingProvider: TtsProvider = async (text) => {
       db.update(items).set({ ne: "खाना खानुभयो?" }).where(eq(items.id, a.id)).run();
-      return Buffer.from(text);
+      return { audio: Buffer.from(text), voice: "v" };
     };
     await ttsJob(db, config, editingProvider)({ itemId: a.id });
     expect(getItem(db, a.id).audioUrl).toBeNull();
@@ -80,11 +80,13 @@ describe("chunkText", () => {
 });
 
 describe("withGoogleFallback", () => {
-  const google: TtsProvider = async (text, voice) => Buffer.from(`google:${voice}:${text}`);
+  const google: TtsProvider = async (text, voice) => ({ audio: Buffer.from(`google:${text}`), voice });
 
   it("uses the primary provider when it works", async () => {
     const tts = withGoogleFallback(fakeProvider, "edge", google);
-    expect((await tts("नमस्ते", "ne-NP-HemkalaNeural")).toString()).toBe("mp3:नमस्ते");
+    const result = await tts("नमस्ते", "ne-NP-HemkalaNeural");
+    expect(result.audio.toString()).toBe("mp3:नमस्ते");
+    expect(result.voice).toBe("ne-NP-HemkalaNeural");
   });
 
   it("falls back to google with a language code when the primary fails", async () => {
@@ -92,6 +94,9 @@ describe("withGoogleFallback", () => {
       throw new Error("403");
     };
     const tts = withGoogleFallback(broken, "edge", google);
-    expect((await tts("नमस्ते", "ne-NP-HemkalaNeural")).toString()).toBe("google:ne:नमस्ते");
+    const result = await tts("नमस्ते", "ne-NP-HemkalaNeural");
+    expect(result.audio.toString()).toBe("google:नमस्ते");
+    // recorded as google's voice, so it can be regenerated later
+    expect(result.voice).toBe("ne");
   });
 });

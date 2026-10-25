@@ -10,8 +10,9 @@ import { enqueue } from "./jobs";
 
 export const TTS_JOB = "audio.tts";
 
-/** Synthesizes text to an MP3 buffer. */
-export type TtsProvider = (text: string, voice: string) => Promise<Buffer>;
+/** Synthesized MP3, plus the voice that actually spoke it (a fallback may differ). */
+export type TtsResult = { audio: Buffer; voice: string };
+export type TtsProvider = (text: string, voice: string) => Promise<TtsResult>;
 
 const escapeXml = (s: string) =>
   s.replace(/[<>&'"]/g, (c) => ({ "<": "&lt;", ">": "&gt;", "&": "&amp;", "'": "&apos;", '"': "&quot;" })[c]!);
@@ -31,7 +32,7 @@ export function azureProvider(key: string, region: string): TtsProvider {
       body: `<speak version="1.0" xml:lang="${lang}"><voice name="${voice}">${escapeXml(text)}</voice></speak>`,
     });
     if (!res.ok) throw new Error(`Azure TTS ${res.status}: ${await res.text().catch(() => "")}`);
-    return Buffer.from(await res.arrayBuffer());
+    return { audio: Buffer.from(await res.arrayBuffer()), voice };
   };
 }
 
@@ -46,7 +47,7 @@ export function edgeProvider(): TtsProvider {
       for await (const chunk of audioStream) chunks.push(chunk as Buffer);
       const buf = Buffer.concat(chunks);
       if (buf.length === 0) throw new Error("Edge TTS returned no audio");
-      return buf;
+      return { audio: buf, voice };
     } finally {
       tts.close();
     }
@@ -86,7 +87,7 @@ export function googleProvider(): TtsProvider {
     }
     const buf = Buffer.concat(parts);
     if (buf.length === 0) throw new Error("Google TTS returned no audio");
-    return buf;
+    return { audio: buf, voice };
   };
 }
 
@@ -159,8 +160,7 @@ export function ttsJob(db: Db, config: Config, provider: TtsProvider) {
     if (!item || item.audioId || item.archived) return;
 
     const text = item.ne;
-    const voice = config.tts.voice;
-    const buf = await provider(text, voice);
+    const { audio: buf, voice } = await provider(text, config.tts.voice);
 
     const id = newId();
     const name = `${id}.mp3`;
