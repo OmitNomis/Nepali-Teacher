@@ -15,6 +15,7 @@ import {
   loginInput,
   reorderInput,
   reviewAnswer,
+  reviewSessionQuery,
 } from "@nt/shared";
 import { deleteItemAudio, getAudio, isSupportedAudio, MAX_AUDIO_BYTES, saveItemAudio } from "./audio";
 import {
@@ -114,8 +115,8 @@ export function createApp(db: Db, config: Config) {
       return c.json({ queued: queueTts(db, chapter.items.map((i) => i.id)) });
     })
     .get("/review/summary", anyUser, (c) => c.json(reviewSummary(db, c.get("user").id)))
-    .get("/review/session", anyUser, (c) =>
-      c.json(buildSession(db, c.get("user").id, { chapterId: c.req.query("chapter") || undefined })),
+    .get("/review/session", anyUser, zValidator("query", reviewSessionQuery), (c) =>
+      c.json(buildSession(db, c.get("user").id, { chapterId: c.req.valid("query").chapter })),
     )
     .post("/review/answer", anyUser, zValidator("json", reviewAnswer), (c) =>
       c.json(answerCard(db, c.get("user").id, c.req.valid("json"))),

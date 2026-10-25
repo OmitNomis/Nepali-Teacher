@@ -107,6 +107,11 @@ export const reviewAnswer = z.object({
 });
 export type ReviewAnswer = z.infer<typeof reviewAnswer>;
 
+export const reviewSessionQuery = z.object({
+  // limit the quiz to one chapter; omitted = the daily review
+  chapter: z.string().min(1).optional(),
+});
+
 // Spoken Nepali doesn't distinguish vowel length or the three sibilants, and
 // ण is usually said like न. Letters that only differ in these sound the same,
 // so they're never offered as each other's wrong answers, and picking one for
