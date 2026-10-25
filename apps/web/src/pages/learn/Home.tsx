@@ -1,10 +1,10 @@
 import clsx from "clsx";
-import { BookOpen, ChevronRight, MessagesSquare, Play } from "lucide-react";
+import { BookOpen, Check, ChevronRight, MessagesSquare, Play } from "lucide-react";
 import { Link } from "react-router";
 import { EmptyState, List, PageLoader, SectionTitle } from "../../components/ui";
-import type { ChapterSummary } from "../../lib/api";
+import type { ChapterSummary, ReviewSummary } from "../../lib/api";
 import { lastChapter } from "../../lib/lastChapter";
-import { useChapters, useMe } from "../../lib/queries";
+import { useChapters, useMe, useReviewSummary } from "../../lib/queries";
 
 const countLabel = (c: ChapterSummary) => `${c.itemCount}${c.track === "script" ? "文字" : "フレーズ"}`;
 
@@ -36,37 +36,97 @@ function PrayerFlags() {
   );
 }
 
+const Mountains = () => (
+  <svg
+    className="pointer-events-none absolute inset-x-0 bottom-0 h-24 w-full"
+    viewBox="0 0 400 96"
+    preserveAspectRatio="none"
+    aria-hidden
+  >
+    <path d="M0 96 V58 L50 30 L88 50 L150 8 L215 56 L262 34 L320 62 L400 26 V96 Z" fill="white" opacity="0.08" />
+    <path d="M0 96 V76 L70 52 L130 72 L200 44 L270 74 L340 56 L400 70 V96 Z" fill="white" opacity="0.1" />
+  </svg>
+);
+
+/** "18:30" today, "明日 9:00", or a date further out. */
+function whenLabel(iso: string) {
+  const d = new Date(iso);
+  const time = d.toLocaleTimeString("ja-JP", { hour: "numeric", minute: "2-digit" });
+  const days = Math.round((new Date(d).setHours(0, 0, 0, 0) - new Date().setHours(0, 0, 0, 0)) / 86_400_000);
+  if (days <= 0) return time;
+  if (days === 1) return `明日 ${time}`;
+  return d.toLocaleDateString("ja-JP", { month: "long", day: "numeric" });
+}
+
+function Stat({ n, label }: { n: number; label: string }) {
+  return (
+    <div>
+      <p className="font-display text-[40px] leading-none font-extrabold tabular-nums">{n}</p>
+      <p className="mt-1 text-[13px] font-bold opacity-80">{label}</p>
+    </div>
+  );
+}
+
+function ReviewCard({ summary }: { summary: ReviewSummary }) {
+  if (summary.total === 0) return null;
+  if (summary.due + summary.new === 0) {
+    return (
+      <div className="animate-pop flex items-center gap-4 rounded-[22px] border border-line/70 bg-surface p-4 shadow-card">
+        <span className="grid size-12 shrink-0 place-items-center rounded-full bg-ok-soft text-ok">
+          <Check className="size-6" />
+        </span>
+        <div className="min-w-0">
+          <p className="font-bold">今日の復習はおしまい！</p>
+          {summary.nextDue && <p className="text-[13px] text-muted">次の復習は {whenLabel(summary.nextDue)}</p>}
+        </div>
+      </div>
+    );
+  }
+  return (
+    <Link
+      to="/review"
+      className="press animate-pop relative block overflow-hidden rounded-[28px] bg-gradient-to-br from-brand to-brand-deep p-5 text-white shadow-lift"
+    >
+      <Mountains />
+      <div className="relative">
+        <p className="text-[13px] font-bold opacity-75">今日の復習</p>
+        <div className="mt-3 flex items-end gap-7">
+          {summary.due > 0 && <Stat n={summary.due} label="復習" />}
+          {summary.new > 0 && <Stat n={summary.new} label="新しい" />}
+          <span className="ml-auto grid size-14 shrink-0 place-items-center rounded-full bg-white text-brand shadow-lift">
+            <Play className="ml-0.5 size-6" fill="currentColor" />
+          </span>
+        </div>
+        <div className="mt-5 h-1.5 overflow-hidden rounded-full bg-white/20">
+          <div className="h-full rounded-full bg-white/85" style={{ width: `${(summary.learned / summary.total) * 100}%` }} />
+        </div>
+        <p className="mt-1.5 text-xs font-bold opacity-75">
+          {summary.learned} / {summary.total} カード
+        </p>
+      </div>
+    </Link>
+  );
+}
+
 function ContinueCard({ chapter, resumed }: { chapter: ChapterSummary; resumed: boolean }) {
-  const preview = chapter.track === "script" ? chapter.preview.join(" ") : chapter.preview[0];
+  const preview = chapter.track === "script" ? chapter.preview.slice(0, 3).join(" ") : chapter.preview[0];
   return (
     <Link
       to={`/chapters/${chapter.id}`}
-      className="press animate-pop relative block overflow-hidden rounded-[28px] bg-gradient-to-br from-brand to-brand-deep p-5 text-white shadow-lift"
+      className="press animate-pop flex items-center gap-4 rounded-[22px] border border-line/70 bg-surface p-4 shadow-card"
     >
-      <svg
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-24 w-full"
-        viewBox="0 0 400 96"
-        preserveAspectRatio="none"
-        aria-hidden
-      >
-        <path d="M0 96 V58 L50 30 L88 50 L150 8 L215 56 L262 34 L320 62 L400 26 V96 Z" fill="white" opacity="0.08" />
-        <path d="M0 96 V76 L70 52 L130 72 L200 44 L270 74 L340 56 L400 70 V96 Z" fill="white" opacity="0.1" />
-      </svg>
-      <div className="relative flex items-end gap-4">
-        <div className="min-w-0 flex-1">
-          <p className="text-[13px] font-bold opacity-75">{resumed ? "前回の続き" : "はじめよう"}</p>
-          <p className="font-display mt-1 truncate text-2xl font-extrabold">{chapter.titleJa}</p>
-          {preview && (
-            <p lang="ne" className="mt-3 truncate text-[28px] leading-tight font-medium opacity-95">
-              {preview}
-            </p>
-          )}
-          <p className="mt-2 text-[13px] font-bold opacity-75">{countLabel(chapter)}</p>
-        </div>
-        <span className="grid size-14 shrink-0 place-items-center rounded-full bg-white text-brand shadow-lift">
-          <Play className="ml-0.5 size-6" fill="currentColor" />
-        </span>
+      <div className="min-w-0 flex-1">
+        <p className="text-[13px] font-bold text-muted">{resumed ? "前回の続き" : "はじめよう"}</p>
+        <p className="mt-0.5 truncate text-[17px] font-bold">{chapter.titleJa}</p>
+        {preview && (
+          <p lang="ne" className="mt-1 truncate text-[22px] leading-tight font-medium text-indigo">
+            {preview}
+          </p>
+        )}
       </div>
+      <span className="grid size-12 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
+        <Play className="ml-0.5 size-5" fill="currentColor" />
+      </span>
     </Link>
   );
 }
@@ -114,6 +174,7 @@ const today = () =>
 export function Home() {
   const { data: me } = useMe();
   const { data: chapters, isPending } = useChapters();
+  const { data: summary } = useReviewSummary();
 
   const script = chapters?.filter((c) => c.track === "script") ?? [];
   const phrases = chapters?.filter((c) => c.track === "phrases") ?? [];
@@ -142,6 +203,7 @@ export function Home() {
         </EmptyState>
       ) : (
         <>
+          {summary && <ReviewCard summary={summary} />}
           {next && <ContinueCard chapter={next} resumed={!!resumed} />}
 
           {script.length > 0 && (
