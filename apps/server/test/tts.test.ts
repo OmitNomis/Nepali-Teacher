@@ -7,7 +7,7 @@ import { loadConfig, type Config } from "../src/config";
 import { createChapter, createItem, getItem, listMissingAudio } from "../src/content";
 import { openDb, type Db } from "../src/db";
 import { items, jobs, users } from "../src/db/schema";
-import { queueTts, ttsJob, TTS_JOB, withGoogleFallback, type TtsProvider } from "../src/tts";
+import { queueTts, rateLimited, ttsJob, TTS_JOB, withGoogleFallback, type TtsProvider } from "../src/tts";
 
 let db: Db;
 let config: Config;
@@ -98,5 +98,49 @@ describe("withGoogleFallback", () => {
     expect(result.audio.toString()).toBe("google:नमस्ते");
     // recorded as google's voice, so it can be regenerated later
     expect(result.voice).toBe("ne");
+  });
+});
+
+describe("rateLimited", () => {
+  // fake clock: waiting just moves time forward
+  const clock = () => {
+    let t = 0;
+    const waits: number[] = [];
+    return { now: () => t, wait: async (ms: number) => void (waits.push(ms), (t += ms)), waits };
+  };
+
+  it("retries a 429 after waiting, then succeeds", async () => {
+    const c = clock();
+    let calls = 0;
+    const flaky: TtsProvider = async (text, voice) => {
+      if (++calls < 3) throw new Error("Unexpected server response: 429");
+      return { audio: Buffer.from(text), voice };
+    };
+    const tts = rateLimited(flaky, { minGapMs: 0, waitsMs: [100, 200, 300], ...c });
+    expect((await tts("क", "v")).audio.toString()).toBe("क");
+    expect(c.waits).toEqual([100, 200]);
+  });
+
+  it("gives up after the last wait, and doesn't retry other errors", async () => {
+    const c = clock();
+    const limited: TtsProvider = async () => {
+      throw new Error("429");
+    };
+    await expect(rateLimited(limited, { minGapMs: 0, waitsMs: [100], ...c })("क", "v")).rejects.toThrow("429");
+    expect(c.waits).toEqual([100]);
+
+    const forbidden: TtsProvider = async () => {
+      throw new Error("403");
+    };
+    await expect(rateLimited(forbidden, { minGapMs: 0, waitsMs: [100], ...c })("क", "v")).rejects.toThrow("403");
+    expect(c.waits).toEqual([100]);
+  });
+
+  it("spaces consecutive requests apart", async () => {
+    const c = clock();
+    const tts = rateLimited(fakeProvider, { minGapMs: 1500, waitsMs: [], ...c });
+    await tts("क", "v");
+    await tts("ख", "v");
+    expect(c.waits).toEqual([1500]);
   });
 });

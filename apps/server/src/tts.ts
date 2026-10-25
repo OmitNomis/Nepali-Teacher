@@ -54,6 +54,34 @@ export function edgeProvider(): TtsProvider {
   };
 }
 
+const sleep = (ms: number) => new Promise<void>((r) => setTimeout(r, ms));
+
+/**
+ * Spaces requests out and, when the service answers 429 (too many requests),
+ * waits and tries again before giving up. Unofficial endpoints like Edge's
+ * rate-limit a burst such as a freshly imported chapter.
+ */
+export function rateLimited(
+  provider: TtsProvider,
+  { minGapMs = 1500, waitsMs = [3_000, 10_000, 30_000], wait = sleep, now = Date.now } = {},
+): TtsProvider {
+  let nextStart = 0;
+  return async (text, voice) => {
+    for (let attempt = 0; ; attempt++) {
+      const gap = nextStart - now();
+      if (gap > 0) await wait(gap);
+      nextStart = now() + minGapMs;
+      try {
+        return await provider(text, voice);
+      } catch (err) {
+        const retryIn = waitsMs[attempt];
+        if (retryIn === undefined || !/\b429\b/.test((err as Error).message)) throw err;
+        await wait(retryIn);
+      }
+    }
+  };
+}
+
 const GOOGLE_MAX_CHARS = 200;
 
 /** Splits text into chunks under the limit, breaking at spaces where possible. */
@@ -112,7 +140,7 @@ export function providerFromConfig(config: Config): TtsProvider | null {
       if (!config.tts.azureKey) throw new Error("TTS_PROVIDER=azure needs AZURE_SPEECH_KEY");
       return azureProvider(config.tts.azureKey, config.tts.azureRegion);
     case "edge":
-      return withGoogleFallback(edgeProvider(), "edge");
+      return withGoogleFallback(rateLimited(edgeProvider()), "edge");
     case "google":
       return googleProvider();
     default:
