@@ -137,6 +137,31 @@
   100% { box-shadow: 0 0 0 22px transparent; }
 }
 
+@keyframes puff {
+  0% { opacity: 0.35; transform: translateX(3px); }
+  35% { opacity: 1; }
+  100% { opacity: 0.35; transform: translateX(-4px); }
+}
+@keyframes buzz {
+  0%, 100% { transform: translateX(0); }
+  50% { transform: translateX(1.5px); }
+}
+@keyframes contact {
+  0% { opacity: 0.5; transform: scale(1); }
+  100% { opacity: 0; transform: scale(2.4); }
+}
+@utility animate-puff {
+  animation: puff 1.4s ease-out infinite;
+}
+@utility animate-buzz {
+  animation: buzz 0.12s linear infinite;
+}
+@utility animate-contact {
+  animation: contact 1.6s ease-out infinite;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
 @utility animate-sheet {
   animation: sheet-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1);
 }
