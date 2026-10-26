@@ -43,6 +43,10 @@ content. See README.md for setup, deploy, and the chapter JSON format.
   survives `.partial()` and would wipe fields on PATCH (bug fixed, test covers it).
 - Audio: human recordings always win. TTS only fills gaps as placeholders,
   `audio.source = "tts"`, with `audio.voice` = the voice that actually spoke it.
+- Pronunciation: `packages/shared/src/articulation.ts` holds place/manner/
+  voicing/aspiration and a Japanese tip per letter; `MouthDiagram` draws a
+  cutaway from that data (no image assets). Tips compare to Japanese sounds
+  and should be checked by the owner (e.g. च as ts, क्ष, ज्ञ).
 - SRS: cards are created on first answer (no card = new) and keyed by
   (user, item, type). `soundKey` in shared defines which letters count as the
   same sound; the owner (native speaker) may want to adjust it.
