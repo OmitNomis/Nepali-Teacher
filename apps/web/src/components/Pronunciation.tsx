@@ -1,0 +1,228 @@
+import clsx from "clsx";
+import { ArrowRight } from "lucide-react";
+import type { ReactNode } from "react";
+import {
+  CONSONANTS,
+  pronunciation,
+  type ConsonantSound,
+  type Manner,
+  type Place,
+  type Sound,
+  type VowelSound,
+} from "@nt/shared";
+import { play, useNowPlaying } from "../lib/player";
+import { EqBars, PlayButton } from "./audio";
+import { MouthDiagram } from "./MouthDiagram";
+import { Sheet } from "./ui";
+
+const PLACE: Record<Place, string> = {
+  lips: "唇を閉じる",
+  teeth: "舌先を上の前歯の裏に",
+  ridge: "舌先を歯ぐきに",
+  retroflex: "舌先を巻いて上あごに",
+  palate: "舌の真ん中を上あごに",
+  velum: "舌の奥を上あごの奥に",
+  glottis: "のどの奥から",
+};
+
+const MANNER: Record<Manner, string> = {
+  stop: "ふさいで、パッと離す",
+  nasal: "鼻から声を出す",
+  affricate: "つけて、こすりながら離す",
+  fricative: "すき間から息をこする",
+  tap: "一回だけはじく",
+  lateral: "舌の横から声を出す",
+  approximant: "近づけるだけ",
+};
+
+type Tone = "brand" | "gold" | "indigo" | "muted";
+
+function Chip({ tone, children }: { tone: Tone; children: ReactNode }) {
+  return (
+    <span
+      className={clsx(
+        "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-bold",
+        tone === "brand" && "bg-brand-soft text-brand",
+        tone === "gold" && "bg-gold-soft text-gold",
+        tone === "indigo" && "bg-indigo-soft text-indigo",
+        tone === "muted" && "bg-surface-2 text-muted",
+      )}
+    >
+      {children}
+    </span>
+  );
+}
+
+function ConsonantChips({ sound }: { sound: ConsonantSound }) {
+  return (
+    <>
+      <Chip tone="brand">{PLACE[sound.place]}</Chip>
+      <Chip tone="muted">{MANNER[sound.manner]}</Chip>
+      {sound.aspirated ? <Chip tone="gold">息を強く出す</Chip> : <Chip tone="muted">息は出さない</Chip>}
+      {sound.voiced ? <Chip tone="indigo">声あり（のどが震える）</Chip> : <Chip tone="muted">声なし</Chip>}
+    </>
+  );
+}
+
+function VowelChips({ sound }: { sound: VowelSound }) {
+  const { height, back, round } = sound.shape;
+  return (
+    <>
+      <Chip tone="brand">
+        {height === "high" ? "口は狭く" : height === "mid" ? "口は中くらい" : "口を大きく開ける"}
+      </Chip>
+      <Chip tone="muted">{back === "front" ? "舌は前" : back === "back" ? "舌は奥" : "舌は真ん中"}</Chip>
+      {round && <Chip tone="muted">唇を丸める</Chip>}
+      {sound.nasal && <Chip tone="gold">鼻に響かせる</Chip>}
+      {sound.breath && <Chip tone="gold">最後に息を吐く</Chip>}
+    </>
+  );
+}
+
+const chips = (sound: Sound) =>
+  sound.kind === "consonant" ? <ConsonantChips sound={sound} /> : <VowelChips sound={sound} />;
+
+/**
+ * The four letters of a row side by side: breath across, voice down.
+ * Hearing them next to each other is what makes क / ख / ग / घ click.
+ */
+function BreathVoiceGrid({
+  sound,
+  letter,
+  audioFor,
+}: {
+  sound: ConsonantSound;
+  letter: string;
+  audioFor: (ne: string) => string | null;
+}) {
+  const nowPlaying = useNowPlaying();
+  const row = Object.entries(CONSONANTS).filter(
+    ([, s]) => s.place === sound.place && s.manner === sound.manner,
+  );
+  const cell = (voiced: boolean, aspirated: boolean) =>
+    row.find(([, s]) => s.voiced === voiced && s.aspirated === aspirated)?.[0];
+  const letters = [cell(false, false), cell(false, true), cell(true, false), cell(true, true)];
+  if (letters.some((l) => !l) || letters.filter((l) => audioFor(l!)).length < 2) return null;
+
+  return (
+    <div className="rounded-[22px] bg-surface-2 p-3">
+      <p className="mb-2 px-1 text-[13px] font-bold text-muted">聞きくらべ</p>
+      <div className="grid grid-cols-[auto_1fr_1fr] items-center gap-2 text-center">
+        <span />
+        <span className="text-xs font-bold text-muted">息なし</span>
+        <span className="text-xs font-bold text-gold">息あり</span>
+        {[false, true].map((voiced) => (
+          <div key={String(voiced)} className="contents">
+            <span className={clsx("w-12 text-xs font-bold", voiced ? "text-indigo" : "text-muted")}>
+              {voiced ? "声あり" : "声なし"}
+            </span>
+            {[false, true].map((aspirated) => {
+              const l = cell(voiced, aspirated)!;
+              const url = audioFor(l);
+              const playing = url !== null && nowPlaying === url;
+              return (
+                <button
+                  key={l}
+                  type="button"
+                  disabled={!url}
+                  onClick={() => url && play(url)}
+                  className={clsx(
+                    "press relative flex h-16 items-center justify-center rounded-2xl border-2 bg-surface transition-colors disabled:opacity-40",
+                    l === letter ? "border-brand" : "border-transparent",
+                  )}
+                >
+                  <span lang="ne" className="text-[32px] leading-none font-medium">
+                    {l}
+                  </span>
+                  {playing && <EqBars className="absolute top-2 right-2 h-3 text-brand" />}
+                </button>
+              );
+            })}
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+/**
+ * How to say a letter: mouth diagram(s), what to do, a tip in Japanese, and
+ * for consonant rows a breath × voice comparison.
+ */
+export function PronunciationGuide({
+  letter,
+  audioFor,
+  compact = false,
+}: {
+  letter: string;
+  audioFor?: (ne: string) => string | null;
+  compact?: boolean;
+}) {
+  const p = pronunciation(letter);
+  if (!p) return null;
+  // a bare consonant's inherent "a" isn't worth a second picture
+  const steps = p.steps.filter((s, i) => !(i > 0 && s.letter === "अ"));
+  const main = steps[0]!.sound;
+
+  return (
+    <div className="flex flex-col gap-4">
+      {steps.length === 1 ? (
+        <MouthDiagram sound={main} className={clsx("mx-auto w-full", compact ? "max-w-[200px]" : "max-w-[240px]")} />
+      ) : (
+        <div className="flex items-center gap-1">
+          {steps.map((s, i) => (
+            <div key={i} className="contents">
+              {i > 0 && <ArrowRight className="size-5 shrink-0 text-muted" />}
+              <div className="min-w-0 flex-1 text-center">
+                <MouthDiagram sound={s.sound} className="w-full" />
+                <span lang="ne" className="text-xl font-medium">
+                  {s.letter}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+      {!compact && <div className="flex flex-wrap justify-center gap-1.5">{chips(main)}</div>}
+      <p className="rounded-2xl bg-surface-2 px-4 py-3 text-[15px] leading-relaxed">{p.tip}</p>
+      {steps.length > 1 && steps[1]!.sound.kind === "vowel" && steps[0]!.sound.kind === "consonant" && (
+        <p className="-mt-2 px-1 text-[13px] leading-relaxed text-muted">
+          <span lang="ne" className="font-bold text-ink">
+            {steps[1]!.letter}
+          </span>
+          ：{steps[1]!.sound.tip}
+        </p>
+      )}
+      {!compact && main.kind === "consonant" && audioFor && (
+        <BreathVoiceGrid sound={main} letter={steps[0]!.letter} audioFor={audioFor} />
+      )}
+    </div>
+  );
+}
+
+export function PronunciationSheet({
+  item,
+  audioFor,
+  onClose,
+}: {
+  item: { ne: string; roman: string; audioUrl: string | null } | null;
+  audioFor: (ne: string) => string | null;
+  onClose: () => void;
+}) {
+  return (
+    <Sheet open={!!item} onClose={onClose} title="発音のしかた">
+      {item && (
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center justify-center gap-4">
+            <span lang="ne" className="text-[56px] leading-none font-medium">
+              {item.ne}
+            </span>
+            {item.roman && <span className="text-xl font-bold text-muted">{item.roman}</span>}
+            <PlayButton url={item.audioUrl} />
+          </div>
+          <PronunciationGuide letter={item.ne} audioFor={audioFor} />
+        </div>
+      )}
+    </Sheet>
+  );
+}

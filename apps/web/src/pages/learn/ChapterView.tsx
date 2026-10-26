@@ -1,8 +1,10 @@
 import clsx from "clsx";
-import { Headphones, Lightbulb, Play, Square, Volume2, X, Zap } from "lucide-react";
+import { Headphones, Info, Lightbulb, Play, Square, Volume2, X, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Link, useParams } from "react-router";
+import { pronunciation } from "@nt/shared";
 import { EqBars } from "../../components/audio";
+import { PronunciationSheet } from "../../components/Pronunciation";
 import { EmptyState, PageHeader, PageLoader } from "../../components/ui";
 import type { Item } from "../../lib/api";
 import { rememberChapter } from "../../lib/lastChapter";
@@ -19,33 +21,45 @@ const toggle = (url: string | null, playing: boolean) => {
   else play(url);
 };
 
-function LetterTile({ item, index }: { item: Item; index: number }) {
+function LetterTile({ item, index, onInfo }: { item: Item; index: number; onInfo?: () => void }) {
   const playing = usePlaying(item.audioUrl);
   return (
-    <button
-      type="button"
-      data-audio={item.audioUrl ?? undefined}
-      disabled={!item.audioUrl}
-      onClick={() => toggle(item.audioUrl, playing)}
-      style={{ animationDelay: `${Math.min(index, 20) * 25}ms` }}
-      className={clsx(
-        "press animate-pop relative flex aspect-square flex-col items-center justify-center rounded-[22px] border transition-all duration-200",
-        playing
-          ? "scale-[1.03] border-brand bg-brand text-brand-ink shadow-lift"
-          : "border-line/70 bg-surface shadow-card",
-        !item.audioUrl && "border-dashed opacity-50 shadow-none",
-      )}
-    >
-      <span lang="ne" className="text-[44px] leading-none font-medium">
-        {item.ne}
-      </span>
-      {item.roman && (
-        <span className={clsx("mt-2.5 text-[13px] font-semibold", playing ? "text-brand-ink/85" : "text-muted")}>
-          {item.roman}
+    <div className="animate-pop relative" style={{ animationDelay: `${Math.min(index, 20) * 25}ms` }}>
+      <button
+        type="button"
+        data-audio={item.audioUrl ?? undefined}
+        disabled={!item.audioUrl}
+        onClick={() => toggle(item.audioUrl, playing)}
+        className={clsx(
+          "press relative flex aspect-square w-full flex-col items-center justify-center rounded-[22px] border transition-all duration-200",
+          playing
+            ? "scale-[1.03] border-brand bg-brand text-brand-ink shadow-lift"
+            : "border-line/70 bg-surface shadow-card",
+          !item.audioUrl && "border-dashed opacity-50 shadow-none",
+        )}
+      >
+        <span lang="ne" className="text-[44px] leading-none font-medium">
+          {item.ne}
         </span>
+        {item.roman && (
+          <span className={clsx("mt-2.5 text-[13px] font-semibold", playing ? "text-brand-ink/85" : "text-muted")}>
+            {item.roman}
+          </span>
+        )}
+        {playing && <EqBars className="absolute top-3 left-3 h-3 text-brand-ink/80" />}
+      </button>
+      {onInfo && (
+        // big invisible hit area around a small icon
+        <button
+          type="button"
+          aria-label="発音のしかた"
+          onClick={onInfo}
+          className="press absolute right-0 bottom-0 grid size-11 place-items-center"
+        >
+          <Info className={clsx("size-[18px] transition-colors", playing ? "text-brand-ink/80" : "text-muted/70")} />
+        </button>
       )}
-      {playing && <EqBars className="absolute top-3 right-3 h-3 text-brand-ink/80" />}
-    </button>
+    </div>
   );
 }
 
@@ -219,6 +233,7 @@ export function ChapterView() {
   const queueActive = useQueueActive();
   const run = usePlayRun();
   const nowPlaying = useNowPlaying();
+  const [guide, setGuide] = useState<Item | null>(null);
 
   useEffect(() => () => stop(), []);
   useEffect(() => {
@@ -288,7 +303,12 @@ export function ChapterView() {
       ) : isScript ? (
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-4">
           {items.map((item, i) => (
-            <LetterTile key={item.id} item={item} index={i} />
+            <LetterTile
+              key={item.id}
+              item={item}
+              index={i}
+              onInfo={pronunciation(item.ne) ? () => setGuide(item) : undefined}
+            />
           ))}
         </div>
       ) : (
@@ -304,6 +324,11 @@ export function ChapterView() {
       )}
 
       <NowPlayingBar items={items} />
+      <PronunciationSheet
+        item={guide}
+        audioFor={(ne) => items.find((i) => i.ne === ne)?.audioUrl ?? null}
+        onClose={() => setGuide(null)}
+      />
     </>
   );
 }
