@@ -129,3 +129,5 @@ const SAME_SOUND: [RegExp, string][] = [
 export function soundKey(ne: string) {
   return SAME_SOUND.reduce((s, [re, to]) => s.replace(re, to), ne.trim());
 }
+
+export * from "./articulation";
