@@ -1,0 +1,178 @@
+{
+  "version": 1,
+  "chapter": {
+    "id": "greetings",
+    "track": "phrases",
+    "titleJa": "あいさつ",
+    "titleNe": "अभिवादन",
+    "descriptionJa": "会ったとき、自己紹介、別れるときのひとこと。まずは聞いて、まねしてみよう。",
+    "items": [
+      {
+        "id": "g-namaste",
+        "kind": "phrase",
+        "ne": "नमस्ते।",
+        "ja": "こんにちは。",
+        "roman": "namaste.",
+        "note": "朝・昼・夜いつでも使える。目上の人には胸の前で手を合わせて。"
+      },
+      {
+        "id": "g-how-polite",
+        "kind": "phrase",
+        "ne": "तपाईंलाई कस्तो छ?",
+        "ja": "お元気ですか？",
+        "roman": "tapāĩlāī kasto cha?",
+        "register": "polite",
+        "group": "g-how"
+      },
+      {
+        "id": "g-how-casual",
+        "kind": "phrase",
+        "ne": "तिमीलाई कस्तो छ?",
+        "ja": "元気？",
+        "roman": "timīlāī kasto cha?",
+        "register": "casual",
+        "group": "g-how"
+      },
+      {
+        "id": "g-how-intimate",
+        "kind": "phrase",
+        "ne": "तँलाई कस्तो छ?",
+        "ja": "元気か？",
+        "roman": "tãlāī kasto cha?",
+        "register": "intimate",
+        "group": "g-how"
+      },
+      {
+        "id": "g-fine",
+        "kind": "phrase",
+        "ne": "मलाई सन्चै छ, धन्यवाद।",
+        "ja": "元気です、ありがとう。",
+        "roman": "malāī sancai cha, dhanyavād."
+      },
+      {
+        "id": "g-name-polite",
+        "kind": "phrase",
+        "ne": "तपाईंको नाम के हो?",
+        "ja": "お名前は何ですか？",
+        "roman": "tapāĩko nām ke ho?",
+        "register": "polite",
+        "group": "g-name"
+      },
+      {
+        "id": "g-name-casual",
+        "kind": "phrase",
+        "ne": "तिम्रो नाम के हो?",
+        "ja": "名前は何？",
+        "roman": "timro nām ke ho?",
+        "register": "casual",
+        "group": "g-name"
+      },
+      {
+        "id": "g-my-name",
+        "kind": "phrase",
+        "ne": "मेरो नाम साकुरा हो।",
+        "ja": "私の名前はさくらです。",
+        "roman": "mero nām sākurā ho."
+      },
+      {
+        "id": "g-from-japan",
+        "kind": "phrase",
+        "ne": "म जापानबाट आएकी हुँ।",
+        "ja": "日本から来ました。",
+        "roman": "ma jāpānbāṭa āekī hũ.",
+        "note": "女性は「आएकी」、男性は「आएको」と言う。"
+      },
+      {
+        "id": "g-where-from",
+        "kind": "phrase",
+        "ne": "तपाईं कहाँबाट आउनुभएको?",
+        "ja": "どちらから来られたんですか？",
+        "roman": "tapāĩ kahā̃bāṭa āunubhaeko?"
+      },
+      {
+        "id": "g-ate-polite",
+        "kind": "phrase",
+        "ne": "खाना खानुभयो?",
+        "ja": "ご飯は食べましたか？",
+        "roman": "khānā khānubhayo?",
+        "note": "ネパールでは、あいさつ代わりによく聞かれる質問。",
+        "register": "polite",
+        "group": "g-ate"
+      },
+      {
+        "id": "g-ate-casual",
+        "kind": "phrase",
+        "ne": "खाना खायौ?",
+        "ja": "ご飯食べた？",
+        "roman": "khānā khāyau?",
+        "register": "casual",
+        "group": "g-ate"
+      },
+      {
+        "id": "g-ate-yes",
+        "kind": "phrase",
+        "ne": "अँ, खाएँ।",
+        "ja": "うん、食べたよ。",
+        "roman": "ã, khāẽ."
+      },
+      {
+        "id": "g-little-nepali",
+        "kind": "phrase",
+        "ne": "मलाई नेपाली अलिअलि आउँछ।",
+        "ja": "ネパール語は少しだけできます。",
+        "roman": "malāī nepālī ali-ali āũcha."
+      },
+      {
+        "id": "g-learning",
+        "kind": "phrase",
+        "ne": "म नेपाली सिक्दै छु, गल्ती भयो भने माफ गर्नुहोला है।",
+        "ja": "ネパール語を勉強中なので、間違えたらごめんなさいね。",
+        "roman": "ma nepālī sikdai chu, galtī bhayo bhane māph garnuhola hai."
+      },
+      {
+        "id": "g-slowly",
+        "kind": "phrase",
+        "ne": "अलि बिस्तारै बोल्नुहोस् न।",
+        "ja": "もう少しゆっくり話してください。",
+        "roman": "ali bistārai bolnuhos na."
+      },
+      {
+        "id": "g-again",
+        "kind": "phrase",
+        "ne": "फेरि भन्नुहोस् त।",
+        "ja": "もう一度言ってください。",
+        "roman": "pheri bhannuhos ta."
+      },
+      {
+        "id": "g-weather",
+        "kind": "phrase",
+        "ne": "आज मौसम कति राम्रो छ, होइन?",
+        "ja": "今日はいい天気ですね。",
+        "roman": "āja mausam kati rāmro cha, hoina?"
+      },
+      {
+        "id": "g-thanks",
+        "kind": "phrase",
+        "ne": "धन्यवाद।",
+        "ja": "ありがとう。",
+        "roman": "dhanyavād.",
+        "note": "家族や親しい友達には、あまり言わない。言いすぎると他人行儀に聞こえることも。"
+      },
+      {
+        "id": "g-see-you",
+        "kind": "phrase",
+        "ne": "फेरि भेटौँला।",
+        "ja": "また会いましょう。",
+        "roman": "pheri bheṭaũlā."
+      },
+      {
+        "id": "g-bye",
+        "kind": "phrase",
+        "ne": "ल, म जान्छु है।",
+        "ja": "じゃあ、行くね。",
+        "roman": "la, ma jānchu hai.",
+        "note": "「है」は「〜ね」のような、やわらかい言い方。"
+      }
+    ]
+  }
+}
