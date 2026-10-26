@@ -7,7 +7,15 @@ import { loadConfig, type Config } from "../src/config";
 import { createChapter, createItem, getItem, listMissingAudio } from "../src/content";
 import { openDb, type Db } from "../src/db";
 import { items, jobs, users } from "../src/db/schema";
-import { queueTts, rateLimited, ttsJob, TTS_JOB, withGoogleFallback, type TtsProvider } from "../src/tts";
+import {
+  queueTts,
+  rateLimited,
+  requeueOtherVoices,
+  ttsJob,
+  TTS_JOB,
+  withGoogleFallback,
+  type TtsProvider,
+} from "../src/tts";
 
 let db: Db;
 let config: Config;
@@ -142,5 +150,30 @@ describe("rateLimited", () => {
     await tts("क", "v");
     await tts("ख", "v");
     expect(c.waits).toEqual([1500]);
+  });
+});
+
+describe("requeueOtherVoices", () => {
+  const voiced = (voice: string): TtsProvider => async (text) => ({ audio: Buffer.from(text), voice });
+
+  it("regenerates only TTS clips in another voice, never recordings", async () => {
+    const google = add("क");
+    const edge = add("ख");
+    const recorded = add("ग");
+    await ttsJob(db, config, voiced("ne"))({ itemId: google.id });
+    await ttsJob(db, config, voiced("ne-NP-HemkalaNeural"))({ itemId: edge.id });
+    const { saveItemAudio } = await import("../src/audio");
+    await saveItemAudio(db, config, recorded.id, new File([new Uint8Array(10)], "r.m4a", { type: "audio/mp4" }), 1);
+    db.delete(jobs).run();
+
+    const dry = requeueOtherVoices(db, config, "ne-NP-HemkalaNeural", { dryRun: true });
+    expect(dry.stale.map((s) => s.ne)).toEqual(["क"]);
+    expect(getItem(db, google.id).audioUrl).not.toBeNull();
+
+    const { queued } = requeueOtherVoices(db, config, "ne-NP-HemkalaNeural");
+    expect(queued).toBe(1);
+    expect(getItem(db, google.id).audioUrl).toBeNull();
+    expect(getItem(db, edge.id).audioSource).toBe("tts");
+    expect(getItem(db, recorded.id).audioSource).toBe("recording");
   });
 });

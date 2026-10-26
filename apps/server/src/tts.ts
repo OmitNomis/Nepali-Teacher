@@ -1,6 +1,6 @@
 import fs from "node:fs";
 import path from "node:path";
-import { and, eq, inArray, isNull, sql } from "drizzle-orm";
+import { and, eq, inArray, isNull, ne, or, sql } from "drizzle-orm";
 import { MsEdgeTTS, OUTPUT_FORMAT } from "msedge-tts";
 import type { Config } from "./config";
 import type { Db } from "./db";
@@ -178,6 +178,30 @@ export function queueTts(db: Db, itemIds: string[]) {
     }
   }
   return queued;
+}
+
+/**
+ * Drops TTS placeholders spoken in any voice other than `voice` (e.g. Google
+ * fallbacks after an Edge outage, or after switching voices) and queues them
+ * again. Human recordings are never touched; review cards hang off the item,
+ * not the audio, so learning progress is kept.
+ */
+export function requeueOtherVoices(db: Db, config: Config, voice: string, { dryRun = false } = {}) {
+  const stale = db
+    .select({ itemId: items.id, ne: items.ne, audioId: audio.id, file: audio.file, voice: audio.voice })
+    .from(items)
+    .innerJoin(audio, eq(items.audioId, audio.id))
+    .where(and(eq(audio.source, "tts"), eq(items.archived, false), or(isNull(audio.voice), ne(audio.voice, voice))))
+    .all();
+  if (dryRun) return { stale, queued: 0 };
+  for (const s of stale) {
+    db.transaction((tx) => {
+      tx.update(items).set({ audioId: null }).where(eq(items.id, s.itemId)).run();
+      tx.delete(audio).where(eq(audio.id, s.audioId)).run();
+    });
+    fs.rm(path.join(config.audioDir, s.file), { force: true }, () => {});
+  }
+  return { stale, queued: queueTts(db, stale.map((s) => s.itemId)) };
 }
 
 /** Job: synthesize the item's current text, unless it got audio meanwhile. */
