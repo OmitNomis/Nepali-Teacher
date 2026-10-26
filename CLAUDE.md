@@ -30,7 +30,10 @@ content. See README.md for setup, deploy, and the chapter JSON format.
   Docker and caps Node at 20 (unofficial x86 build in `/opt/node20`), so the
   server is built with `tsup --target node20` and `better-sqlite3@12` is
   compiled on the box. Ship only `dist/`, `drizzle/`, `web/`; keep its
-  `node_modules`. Accounts: `nepali-user <name> <admin|learner> [display]`.
+  `node_modules`. Accounts: `nepali-user <name> <admin|learner> [display]`;
+  content: `nepali-import <file.json>...`; redo off-voice TTS:
+  `nepali-tts-regenerate [--dry-run]`. Before a deploy with migrations, snapshot
+  the db into `/var/lib/nepali-teacher/backups/`.
   Data in `/var/lib/nepali-teacher`. The Docker + Caddy VPS setup in the
   README still works as an alternative. Off-server backups are still TODO.
 - Item IDs must never change: review history hangs off them. Archive, don't delete.
@@ -39,7 +42,10 @@ content. See README.md for setup, deploy, and the chapter JSON format.
 - Patch schemas are built from default-free base fields: in zod 4, `.default()`
   survives `.partial()` and would wipe fields on PATCH (bug fixed, test covers it).
 - Audio: human recordings always win. TTS only fills gaps as placeholders,
-  `audio.source = "tts"`.
+  `audio.source = "tts"`, with `audio.voice` = the voice that actually spoke it.
+- SRS: cards are created on first answer (no card = new) and keyed by
+  (user, item, type). `soundKey` in shared defines which letters count as the
+  same sound; the owner (native speaker) may want to adjust it.
 
 ## TTS status (as of 2026-10-22)
 - `edge` (keyless default): works again since msedge-tts 2.1.0 (the 403s from
@@ -52,9 +58,9 @@ content. See README.md for setup, deploy, and the chapter JSON format.
 ## Roadmap
 1. Base app ✅
 2. Better TTS ✅ (Edge neural voices; Piper still an option)
-3. **Devanagari script SRS**: FSRS via `ts-fsrs`, review log table. Card types:
-   letter→sound and sound→letter. Script order: vowels, consonants, then vowel
-   marks (barakhari) early so real words are readable; conjuncts later.
+3. Devanagari script SRS ✅ (FSRS cards + review logs, listen/read quiz,
+   vowels / consonants / क barakhari in `content/script`). Next for script:
+   more barakhari series, conjuncts later.
 4. Phrase chapters (greetings, food, family…), likely LLM-drafted in the import
    JSON and checked by the owner. Listening cards: audio → meaning.
 5. Off-server backups (e.g. Litestream / rclone to R2 or B2).

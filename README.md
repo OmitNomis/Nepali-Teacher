@@ -84,6 +84,12 @@ New and imported items are queued for TTS automatically. Editing the Nepali text
 of an item that only has TTS regenerates it. A human recording always replaces
 TTS and is never overwritten by it.
 
+Edge requests are spaced out and rate-limited ones (429) are retried before
+falling back to Google. Each clip records the voice that actually spoke it, so
+`pnpm --filter @nt/server exec tsx src/cli/regenerate-tts.ts [--dry-run]`
+(`nepali-tts-regenerate` on the server) redoes placeholders that aren't in the
+configured voice, e.g. after a fallback or a voice change.
+
 ## Chapter JSON (for bulk edits or LLM-written chapters)
 
 ```json
@@ -122,6 +128,20 @@ TTS and is never overwritten by it.
 | `id` | Optional. Items with an existing id are updated in place, keeping their audio and history. Never change an id once a learner is studying the item. |
 
 Importing never deletes anything. Items missing from the file are kept.
+
+Import from the admin UI (Content → import icon), or from the command line:
+`pnpm chapter:import content/script/*.json` (`nepali-import` on the server).
+The script chapters (vowels, consonants, ka barakhari) live in `content/`.
+
+## Review (SRS)
+
+Every script letter with audio becomes two cards per learner: **listen** (hear
+it, pick the letter) and **read** (see it, pick the sound). Scheduling is FSRS
+(`ts-fsrs`); a right answer rates Good, a wrong one Again, and every answer is
+logged with what was picked. The daily review on home introduces up to 10 new
+cards a day in chapter order; a chapter's クイズ button can go past that.
+Letters that sound the same in Nepali (इ/ई, उ/ऊ, श/ष/स, ण/न and their
+matras) are never offered as each other's wrong answers and count as right.
 
 ### Prompt template for an LLM
 
