@@ -5,6 +5,7 @@ import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
 import { soundKey } from "@nt/shared";
 import { EqBars } from "../../components/audio";
+import { PronunciationGuide } from "../../components/Pronunciation";
 import { Button, PageLoader, useToast } from "../../components/ui";
 import { client, unwrap, type QuizItem, type SessionCard } from "../../lib/api";
 import { play, stop, useNowPlaying } from "../../lib/player";
@@ -44,16 +45,23 @@ function SoundButton({ item, size = "md", className }: { item: QuizItem; size?: 
 
 function Intro({ item, onDone }: { item: QuizItem; onDone: () => void }) {
   return (
-    <div className="animate-pop flex flex-1 flex-col items-center justify-center text-center">
+    <div className="animate-pop flex flex-1 flex-col items-center text-center">
       <span className="inline-flex items-center gap-1 rounded-full bg-gold-soft px-3 py-1 text-xs font-bold text-gold">
         <Sparkles className="size-3.5" /> 新しい文字
       </span>
-      <p lang="ne" className="mt-6 text-[112px] leading-none font-medium">
-        {item.ne}
-      </p>
-      {item.roman && <p className="mt-4 text-2xl font-bold text-muted">{item.roman}</p>}
-      <SoundButton item={item} className="mt-8" />
-      <Button size="lg" className="mt-auto w-full" onClick={onDone}>
+      <div className="mt-3 flex items-center gap-5">
+        <p lang="ne" className="text-[88px] leading-none font-medium">
+          {item.ne}
+        </p>
+        <div className="flex flex-col items-center gap-2">
+          {item.roman && <p className="text-2xl font-bold text-muted">{item.roman}</p>}
+          <SoundButton item={item} />
+        </div>
+      </div>
+      <div className="mt-3 w-full text-left">
+        <PronunciationGuide letter={item.ne} compact />
+      </div>
+      <Button size="lg" className="mt-auto w-full shrink-0" onClick={onDone}>
         覚えた！
       </Button>
     </div>
