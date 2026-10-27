@@ -256,7 +256,7 @@ export function Review() {
   const back = chapterId ? `/chapters/${chapterId}` : "/";
   const qc = useQueryClient();
   const toast = useToast();
-  const { data: session, isPending, refetch } = useReviewSession(chapterId);
+  const { data: session, isPending, isFetching, refetch } = useReviewSession(chapterId);
 
   const [queue, setQueue] = useState<SessionCard[] | null>(null);
   const [pos, setPos] = useState(0);
@@ -375,7 +375,8 @@ export function Review() {
         )}
       </header>
 
-      {isPending || !session ? (
+      {/* after "もう一回", wait for the new session rather than offering the old one */}
+      {isPending || !session || (!queue && isFetching) ? (
         <PageLoader />
       ) : !queue ? (
         session.cards.length === 0 ? (
