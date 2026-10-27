@@ -273,7 +273,7 @@ export function Review() {
   const save = useMutation({
     mutationFn: (body: { itemId: string; type: SessionCard["type"]; chosenItemId: string; durationMs: number }) =>
       unwrap(client.review.answer.$post({ json: body })),
-    onError: (e) => toast(e.message, "error"),
+    onError: () => toast("答えを保存できませんでした", "error"),
   });
 
   const card = queue?.[pos];

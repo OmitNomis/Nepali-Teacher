@@ -1,7 +1,14 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Button, Field, TextInput } from "../components/ui";
-import { client, unwrap } from "../lib/api";
+import { ApiError, client, unwrap } from "../lib/api";
+
+/** The learner reads Japanese only, so no server or network message is shown as is. */
+function loginError(err: Error) {
+  if (err instanceof ApiError && err.status === 401) return "ユーザー名かパスワードが違います";
+  if (err instanceof ApiError && err.status === 429) return "失敗が続いたので、しばらく待ってからもう一度試してください";
+  return "ログインできませんでした。通信状況を確認して、もう一度試してください";
+}
 
 /** Dusk over the Himalaya: layered ridges in the flag's crimson and blue. */
 function Scene() {
@@ -95,11 +102,7 @@ export function Login() {
             )}
           </Field>
           {login.error && (
-            <p className="rounded-2xl bg-brand-soft px-4 py-3 text-sm font-bold text-brand">
-              {login.error.message === "Wrong username or password"
-                ? "ユーザー名かパスワードが違います"
-                : login.error.message}
-            </p>
+            <p className="rounded-2xl bg-brand-soft px-4 py-3 text-sm font-bold text-brand">{loginError(login.error)}</p>
           )}
           <Button size="lg" type="submit" className="mt-2" loading={login.isPending} disabled={!username || !password}>
             ログイン
