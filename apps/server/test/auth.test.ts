@@ -50,4 +50,15 @@ describe("login throttle", () => {
     expect(res.headers.get("x-content-type-options")).toBe("nosniff");
     expect(res.headers.get("x-frame-options")).toBe("SAMEORIGIN");
   });
+
+  it("rejects bad input with a readable error string", async () => {
+    const res = await app.request("/api/auth/login", {
+      method: "POST",
+      headers: { "content-type": "application/json" },
+      body: JSON.stringify({ username: "", password: "x" }),
+    });
+    expect(res.status).toBe(400);
+    const body = (await res.json()) as { error: unknown };
+    expect(body.error).toEqual(expect.stringMatching(/^username: /));
+  });
 });

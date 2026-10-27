@@ -49,6 +49,18 @@ import type { Db } from "./db";
 import { answerCard, buildSession, reviewSummary } from "./srs";
 import { queueTts } from "./tts";
 
+type ParseResult = { success: boolean; error?: { issues: { path: PropertyKey[]; message: string }[] } };
+
+/**
+ * zValidator hook: bad input fails like every other error, as a 400 with a
+ * readable `error` string (zValidator's default body is the whole ZodError).
+ */
+function invalidInput(result: ParseResult) {
+  if (result.success) return;
+  const issue = result.error?.issues[0];
+  throw new HTTPException(400, { message: `${issue?.path.map(String).join(".") || "input"}: ${issue?.message}` });
+}
+
 export function createApp(db: Db, config: Config) {
   const anyUser = requireRole(db);
   const admin = requireRole(db, "admin");
@@ -58,7 +70,7 @@ export function createApp(db: Db, config: Config) {
 
   const auth = new Hono<AppEnv>()
     .get("/me", (c) => c.json({ user: sessionUser(c, db) }))
-    .post("/login", zValidator("json", loginInput), async (c) => {
+    .post("/login", zValidator("json", loginInput, invalidInput), async (c) => {
       const key = clientIp(c.req.header("x-forwarded-for"));
       if (throttle.blocked(key)) {
         throw new HTTPException(429, { message: "Too many attempts, try again later" });
@@ -87,24 +99,24 @@ export function createApp(db: Db, config: Config) {
       const includeArchived = c.get("user").role === "admin";
       return c.json(getChapter(db, c.req.param("id"), { includeArchived }));
     })
-    .post("/chapters", admin, zValidator("json", chapterInput), (c) =>
+    .post("/chapters", admin, zValidator("json", chapterInput, invalidInput), (c) =>
       c.json({ id: createChapter(db, c.req.valid("json")) }, 201),
     )
-    .patch("/chapters/:id", admin, zValidator("json", chapterPatch), (c) => {
+    .patch("/chapters/:id", admin, zValidator("json", chapterPatch, invalidInput), (c) => {
       updateChapter(db, c.req.param("id"), c.req.valid("json"));
       return c.json({ ok: true });
     })
-    .post("/chapters/reorder", admin, zValidator("json", reorderInput), (c) => {
+    .post("/chapters/reorder", admin, zValidator("json", reorderInput, invalidInput), (c) => {
       reorderChapters(db, c.req.valid("json").ids);
       return c.json({ ok: true });
     })
     .get("/chapters/:id/export", admin, (c) => c.json(exportChapter(db, c.req.param("id"))))
-    .post("/chapters/import", admin, zValidator("json", chapterFile), (c) => {
+    .post("/chapters/import", admin, zValidator("json", chapterFile, invalidInput), (c) => {
       const result = importChapter(db, c.req.valid("json"));
       const chapter = getChapter(db, result.chapterId, { includeArchived: false });
       return c.json({ ...result, ttsQueued: autoTts(chapter.items.map((i) => i.id)) });
     })
-    .post("/chapters/:id/items", admin, zValidator("json", itemInput), (c) => {
+    .post("/chapters/:id/items", admin, zValidator("json", itemInput, invalidInput), (c) => {
       const item = createItem(db, c.req.param("id"), c.req.valid("json"));
       autoTts([item.id]);
       return c.json(item, 201);
@@ -115,20 +127,20 @@ export function createApp(db: Db, config: Config) {
       return c.json({ queued: queueTts(db, chapter.items.map((i) => i.id)) });
     })
     .get("/review/summary", anyUser, (c) => c.json(reviewSummary(db, c.get("user").id)))
-    .get("/review/session", anyUser, zValidator("query", reviewSessionQuery), (c) =>
+    .get("/review/session", anyUser, zValidator("query", reviewSessionQuery, invalidInput), (c) =>
       c.json(buildSession(db, c.get("user").id, { chapterId: c.req.valid("query").chapter })),
     )
-    .post("/review/answer", anyUser, zValidator("json", reviewAnswer), (c) =>
+    .post("/review/answer", anyUser, zValidator("json", reviewAnswer, invalidInput), (c) =>
       c.json(answerCard(db, c.get("user").id, c.req.valid("json"))),
     )
     .get("/tts", admin, (c) =>
       c.json({ provider: ttsOn ? config.tts.provider : null, voice: config.tts.voice }),
     )
-    .post("/chapters/:id/items/reorder", admin, zValidator("json", reorderInput), (c) => {
+    .post("/chapters/:id/items/reorder", admin, zValidator("json", reorderInput, invalidInput), (c) => {
       reorderItems(db, c.req.param("id"), c.req.valid("json").ids);
       return c.json({ ok: true });
     })
-    .patch("/items/:id", admin, zValidator("json", itemPatch), (c) => {
+    .patch("/items/:id", admin, zValidator("json", itemPatch, invalidInput), (c) => {
       const id = c.req.param("id");
       const before = getItem(db, id);
       const patch = c.req.valid("json");
