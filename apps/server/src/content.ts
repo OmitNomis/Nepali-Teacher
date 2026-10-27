@@ -106,7 +106,9 @@ export function createChapter(db: Db, input: ChapterInput, id = newId()) {
 }
 
 export function updateChapter(db: Db, id: string, patch: ChapterPatch) {
-  const res = db.update(chapters).set(patch).where(eq(chapters.id, id)).run();
+  // setting updatedAt keeps an empty patch (`{}`, or only unknown keys) from
+  // making drizzle throw "No values to set"; same in updateItem
+  const res = db.update(chapters).set({ ...patch, updatedAt: new Date() }).where(eq(chapters.id, id)).run();
   if (res.changes === 0) throw new NotFoundError("Chapter not found");
 }
 
@@ -129,7 +131,7 @@ export function createItem(db: Db, chapterId: string, input: ItemInput, id = new
 }
 
 export function updateItem(db: Db, id: string, patch: ItemPatch) {
-  const res = db.update(items).set(patch).where(eq(items.id, id)).run();
+  const res = db.update(items).set({ ...patch, updatedAt: new Date() }).where(eq(items.id, id)).run();
   if (res.changes === 0) throw new NotFoundError("Item not found");
   return getItem(db, id);
 }

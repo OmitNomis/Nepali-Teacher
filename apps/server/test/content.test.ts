@@ -11,6 +11,8 @@ import {
   getChapter,
   importChapter,
   listChapters,
+  NotFoundError,
+  updateChapter,
   updateItem,
 } from "../src/content";
 
@@ -84,6 +86,14 @@ describe("patch schemas", () => {
     const { itemPatch, chapterPatch } = await import("@nt/shared");
     expect(itemPatch.parse({ archived: true })).toEqual({ archived: true });
     expect(chapterPatch.parse({ archived: true })).toEqual({ archived: true });
+  });
+
+  it("an empty patch is a no-op, and still 404s for unknown ids", () => {
+    const c = createChapter(db, { track: "phrases", titleJa: "A", titleNe: "", descriptionJa: "" });
+    const item = createItem(db, c, { kind: "word", ne: "पानी", ja: "水", roman: "", note: "", register: null, group: "" });
+    expect(() => updateChapter(db, c, {})).not.toThrow();
+    expect(updateItem(db, item.id, {})).toMatchObject({ ne: "पानी", ja: "水" });
+    expect(() => updateItem(db, "nope", {})).toThrow(NotFoundError);
   });
 
   it("archiving an item keeps its translation", () => {
