@@ -1,11 +1,13 @@
 // Usage: pnpm user:create <username> <admin|learner> [display name]
-// Prompts for the password. Running it for an existing username resets the password.
+// Prompts for the password. Running it for an existing username resets the
+// password and signs that user out on every device.
 import { createInterface } from "node:readline/promises";
+import { eq } from "drizzle-orm";
 import { ROLES, type Role } from "@nt/shared";
 import { hashPassword } from "../auth";
 import { loadConfig } from "../config";
 import { openDb } from "../db";
-import { users } from "../db/schema";
+import { sessions, users } from "../db/schema";
 import fs from "node:fs";
 
 const [username, role, ...nameParts] = process.argv.slice(2);
@@ -27,8 +29,12 @@ fs.mkdirSync(config.dataDir, { recursive: true });
 const db = openDb(config.dbFile, config.migrationsDir);
 const passwordHash = await hashPassword(password);
 const displayName = nameParts.join(" ") || username;
-db.insert(users)
+const { id } = db
+  .insert(users)
   .values({ username, role: role as Role, displayName, passwordHash })
   .onConflictDoUpdate({ target: users.username, set: { passwordHash, role: role as Role, displayName } })
-  .run();
-console.log(`Saved ${role} "${username}"`);
+  .returning({ id: users.id })
+  .get();
+// a reset (e.g. after a leak) shouldn't leave old 90-day sessions logged in
+const { changes } = db.delete(sessions).where(eq(sessions.userId, id)).run();
+console.log(`Saved ${role} "${username}"${changes ? `, signed out of ${changes} session(s)` : ""}`);

@@ -60,7 +60,8 @@ Everything persistent is in `./data` on the VPS. Back it up by copying that
 folder, for example from a nightly cron:
 `sqlite3 data/app.db ".backup data/backup.db"` plus `data/audio/`.
 
-Running `create-user` again with an existing username resets that user's password.
+Running `create-user` again with an existing username resets that user's password
+and signs them out on every device.
 
 ## TTS placeholder audio
 
