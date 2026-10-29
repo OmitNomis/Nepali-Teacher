@@ -255,12 +255,20 @@ export function reviewSummary(db: Db, userId: number, now = new Date()) {
     .filter((c) => ids.has(c.itemId));
   const unseen = all.length * CARD_TYPES.length - userCards.length;
   const newLeft = Math.max(0, NEW_CARDS_PER_DAY - introducedSince(db, userId, dayStart(now)));
-  const upcoming = userCards.filter((c) => c.due > now).map((c) => c.due.getTime());
+  const due = userCards.filter((c) => c.due <= now).sort((a, b) => a.due.getTime() - b.due.getTime());
+  const later = userCards.filter((c) => c.due > now).map((c) => c.due.getTime());
+  const seen = new Set(userCards.map((c) => cardKey(c.itemId, c.type)));
+  const fresh = newLeft ? all.filter((i) => CARD_TYPES.some((t) => !seen.has(cardKey(i.id, t)))) : [];
+  const byId = new Map(all.map((i) => [i.id, i]));
   return {
-    due: userCards.filter((c) => c.due <= now).length,
+    due: due.length,
     new: Math.min(newLeft, unseen),
     learned: userCards.length,
     total: all.length * CARD_TYPES.length,
-    nextDue: upcoming.length ? new Date(Math.min(...upcoming)) : null,
+    nextDue: later.length ? new Date(Math.min(...later)) : null,
+    /** A few of the letters today's review covers, due ones first, for the home screen. */
+    letters: [...new Set([...due.map((c) => c.itemId), ...fresh.map((i) => i.id)])]
+      .slice(0, 6)
+      .map((id) => byId.get(id)!.ne),
   };
 }

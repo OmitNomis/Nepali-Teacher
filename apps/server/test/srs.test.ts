@@ -163,6 +163,14 @@ describe("reviewSummary", () => {
     expect(s).toMatchObject({ due: 0, new: 5, learned: 1 });
     expect(s.nextDue).not.toBeNull();
   });
+
+  it("lists the letters coming up, due ones first, then new in course order", () => {
+    const { ids } = scriptChapter(["क", "ख", "ग"]);
+    expect(reviewSummary(db, userId).letters).toEqual(["क", "ख", "ग"]);
+    // ग answered wrong a while ago: due again, so it leads
+    answerCard(db, userId, { itemId: ids[2]!, type: "listen", chosenItemId: ids[0]! }, new Date(Date.now() - 3_600_000));
+    expect(reviewSummary(db, userId).letters).toEqual(["ग", "क", "ख"]);
+  });
 });
 
 describe("dayStart", () => {
