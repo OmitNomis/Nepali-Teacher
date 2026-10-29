@@ -104,6 +104,12 @@ export function stop() {
   setCurrent(null);
 }
 
+/** How far the clip at `url` has played, 0–1 (0 unless it's the one playing). */
+export function progress(url: string) {
+  if (!audio || current !== url || !Number.isFinite(audio.duration) || !audio.duration) return 0;
+  return Math.min(1, audio.currentTime / audio.duration);
+}
+
 const subscribe = (l: () => void) => {
   listeners.add(l);
   return () => listeners.delete(l);

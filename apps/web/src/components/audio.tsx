@@ -1,9 +1,9 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import clsx from "clsx";
 import { LoaderCircle, Mic, Pause, RotateCcw, Square, Volume2 } from "lucide-react";
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useRef, type ReactNode } from "react";
 import { uploadAudio } from "../lib/api";
-import { play, stop, useNowPlaying } from "../lib/player";
+import { play, progress, stop, useNowPlaying } from "../lib/player";
 import { useRecorder } from "../lib/recorder";
 import { useToast } from "./ui";
 
@@ -30,7 +30,7 @@ export function PlayButton({
       }}
       className={clsx(
         "press grid shrink-0 place-items-center rounded-full transition-colors disabled:opacity-30",
-        playing ? "bg-voice text-surface" : "bg-voice-soft text-voice",
+        playing ? "bg-accent text-accent-ink" : "bg-accent-soft text-accent",
         size === "sm" && "size-9",
         size === "md" && "size-11",
         size === "lg" && "size-16",
@@ -43,6 +43,34 @@ export function PlayButton({
         <Volume2 className={size === "lg" ? "size-7" : "size-5"} />
       )}
     </button>
+  );
+}
+
+/**
+ * Nepali text that fills with the accent, karaoke-style, while its clip plays.
+ * The fill follows the audio's position frame by frame without re-rendering.
+ */
+export function Karaoke({ url, className, children }: { url: string | null; className?: string; children: ReactNode }) {
+  const playing = useNowPlaying() === url && url !== null;
+  const ref = useRef<HTMLSpanElement>(null);
+  useEffect(() => {
+    const el = ref.current;
+    if (!playing || !el || !url) return;
+    let frame = 0;
+    const tick = () => {
+      el.style.setProperty("--wipe", `${progress(url) * 100}%`);
+      frame = requestAnimationFrame(tick);
+    };
+    tick();
+    return () => {
+      cancelAnimationFrame(frame);
+      el.style.removeProperty("--wipe");
+    };
+  }, [playing, url]);
+  return (
+    <span ref={ref} lang="ne" className={clsx(playing && "karaoke", className)}>
+      {children}
+    </span>
   );
 }
 
