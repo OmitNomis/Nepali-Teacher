@@ -31,8 +31,8 @@ function ItemRow({ item, index, onEdit }: { item: Item; index: number; onEdit: (
             {item.ne}
           </p>
           <p className="flex items-center gap-1.5 truncate text-[13px] text-muted">
-            {item.register && <Badge tone="brand">{REGISTER_INFO[item.register].pronoun}</Badge>}
-            {item.audioSource === "tts" && <Badge tone="indigo">TTS</Badge>}
+            {item.register && <Badge tone="accent">{REGISTER_INFO[item.register].pronoun}</Badge>}
+            {item.audioSource === "tts" && <Badge tone="voice">TTS</Badge>}
             <span className="truncate">
               {[item.ja, item.roman].filter(Boolean).join(" · ") || <span className="italic">no translation</span>}
             </span>
@@ -114,9 +114,9 @@ export function AdminChapter() {
 
       <Card className="mb-4 p-4">
         <div className="mb-3 flex items-center gap-2">
-          <Badge tone="indigo">{chapter.track === "script" ? "Script" : "Phrases"}</Badge>
+          <Badge tone="voice">{chapter.track === "script" ? "Script" : "Phrases"}</Badge>
           <Badge>{active.length} items</Badge>
-          {chapter.archived && <Badge tone="brand">Archived</Badge>}
+          {chapter.archived && <Badge tone="accent">Archived</Badge>}
         </div>
         <RecordingMeter itemCount={active.length} missing={missing} tts={tts} />
       </Card>
@@ -172,7 +172,7 @@ export function AdminChapter() {
         type="button"
         aria-label="Add item"
         onClick={() => setItemSheet({})}
-        className="press fixed right-5 bottom-[calc(max(env(safe-area-inset-bottom),0.75rem)+5rem)] z-30 grid size-14 place-items-center rounded-full bg-brand text-brand-ink shadow-lift sm:right-[max(1.25rem,calc(50vw-20rem))]"
+        className="press fixed right-5 bottom-[calc(max(env(safe-area-inset-bottom),0.75rem)+5rem)] z-30 grid size-14 place-items-center rounded-full bg-accent text-accent-ink shadow-lift sm:right-[max(1.25rem,calc(50vw-20rem))]"
       >
         <Plus className="size-7" />
       </button>

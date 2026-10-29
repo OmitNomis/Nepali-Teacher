@@ -17,10 +17,10 @@ import { Link } from "react-router";
 type Variant = "primary" | "secondary" | "ghost" | "danger";
 
 const variants: Record<Variant, string> = {
-  primary: "bg-brand text-brand-ink shadow-card hover:brightness-105",
+  primary: "bg-accent text-accent-ink shadow-card hover:brightness-105",
   secondary: "bg-surface text-ink border border-line shadow-card hover:bg-surface-2",
   ghost: "text-ink hover:bg-surface-2",
-  danger: "bg-brand-soft text-brand hover:brightness-95",
+  danger: "bg-accent-soft text-accent hover:brightness-95",
 };
 
 const buttonClass = (variant: Variant, size: "sm" | "md" | "lg") =>
@@ -99,10 +99,10 @@ export function IconButton({
   );
 }
 
-const headerButtonClass = (tone: "plain" | "brand") =>
+const headerButtonClass = (tone: "plain" | "accent") =>
   clsx(
     "press grid size-10 shrink-0 place-items-center rounded-full shadow-card",
-    tone === "brand" ? "bg-brand text-brand-ink" : "border border-line/70 bg-surface text-ink",
+    tone === "accent" ? "bg-accent text-accent-ink" : "border border-line/70 bg-surface text-ink",
   );
 
 /** Round button for the top bar of a page (same look as the back button). */
@@ -112,7 +112,7 @@ export function HeaderButton({
   className,
   children,
   ...props
-}: ButtonHTMLAttributes<HTMLButtonElement> & { label: string; tone?: "plain" | "brand" }) {
+}: ButtonHTMLAttributes<HTMLButtonElement> & { label: string; tone?: "plain" | "accent" }) {
   return (
     <button type="button" aria-label={label} title={label} className={clsx(headerButtonClass(tone), className)} {...props}>
       {children}
@@ -153,7 +153,7 @@ export function Badge({
   tone = "neutral",
   children,
 }: {
-  tone?: "neutral" | "brand" | "indigo" | "gold" | "ok";
+  tone?: "neutral" | "accent" | "voice" | "breath" | "ok";
   children: ReactNode;
 }) {
   return (
@@ -161,9 +161,9 @@ export function Badge({
       className={clsx(
         "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-bold whitespace-nowrap",
         tone === "neutral" && "bg-surface-2 text-muted",
-        tone === "brand" && "bg-brand-soft text-brand",
-        tone === "indigo" && "bg-indigo-soft text-indigo",
-        tone === "gold" && "bg-gold-soft text-gold",
+        tone === "accent" && "bg-accent-soft text-accent",
+        tone === "voice" && "bg-voice-soft text-voice",
+        tone === "breath" && "bg-breath-soft text-breath",
         tone === "ok" && "bg-ok-soft text-ok",
       )}
     >
@@ -209,7 +209,7 @@ export function PageHeader({
           <div className="flex items-center gap-1.5">{action}</div>
         </div>
       )}
-      <h1 className={clsx("font-display text-[28px] leading-tight font-extrabold tracking-tight", !back && !action && "pt-4")}>
+      <h1 className={clsx("text-[28px] leading-tight font-extrabold tracking-tight", !back && !action && "pt-4")}>
         {title}
       </h1>
       {subtitle && <p className="mt-0.5 truncate text-[15px] text-muted">{subtitle}</p>}
@@ -221,7 +221,7 @@ export function EmptyState({ icon, title, children }: { icon: ReactNode; title: 
   return (
     <div className="flex flex-col items-center gap-3 px-6 py-14 text-center">
       <div className="grid size-16 place-items-center rounded-full bg-surface-2 text-muted">{icon}</div>
-      <p className="font-display text-lg font-bold">{title}</p>
+      <p className="text-lg font-bold">{title}</p>
       {children && <div className="text-sm text-muted">{children}</div>}
     </div>
   );
@@ -294,7 +294,7 @@ export function Field({
 }
 
 const inputClass =
-  "w-full rounded-2xl border border-transparent bg-surface-2 px-4 py-3 text-ink placeholder:text-muted/60 outline-none transition focus:border-indigo/50 focus:bg-surface focus:ring-4 focus:ring-indigo/10";
+  "w-full rounded-2xl border border-transparent bg-surface-2 px-4 py-3 text-ink placeholder:text-muted/60 outline-none transition focus:border-voice/50 focus:bg-surface focus:ring-4 focus:ring-voice/10";
 
 export function TextInput({ className, ...props }: ComponentProps<"input">) {
   return <input className={clsx(inputClass, className)} {...props} />;
@@ -354,7 +354,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
             role="status"
             className={clsx(
               "animate-pop rounded-full px-5 py-3 text-sm font-bold shadow-lift",
-              t.tone === "ok" ? "bg-ink text-bg" : "bg-brand text-brand-ink",
+              t.tone === "ok" ? "bg-ink text-bg" : "bg-accent text-accent-ink",
             )}
           >
             {t.message}

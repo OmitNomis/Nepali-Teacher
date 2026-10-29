@@ -3,8 +3,8 @@ import { useId } from "react";
 import type { ConsonantSound, Place, Sound, VowelShape } from "@nt/shared";
 
 // A cutaway of the head, facing left (lips on the left). The tongue, lips,
-// jaw and soft palate move to fit each sound; gold marks air, indigo marks
-// voice, and the crimson dot is where the tongue or lips touch.
+// jaw and soft palate move to fit each sound; gold marks air, violet marks
+// voice, and the raspberry dot is where the tongue or lips touch.
 
 type Pt = [number, number];
 
@@ -166,10 +166,10 @@ export function MouthDiagram({ sound, className }: { sound: Sound; className?: s
     <svg viewBox="-12 6 194 200" className={clsx("block", className)} role="img" aria-hidden>
       <defs>
         <marker id={`air-${id}`} viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-          <path d="M0 1 L9 5 L0 9 Z" fill="var(--gold)" />
+          <path d="M0 1 L9 5 L0 9 Z" fill="var(--breath)" />
         </marker>
         <marker id={`flick-${id}`} viewBox="0 0 10 10" refX="5" refY="5" markerWidth="5" markerHeight="5" orient="auto">
-          <path d="M0 1 L9 5 L0 9 Z" fill="var(--brand)" />
+          <path d="M0 1 L9 5 L0 9 Z" fill="var(--accent)" />
         </marker>
       </defs>
 
@@ -199,9 +199,9 @@ export function MouthDiagram({ sound, className }: { sound: Sound; className?: s
       <path d="M152 132 C146 126 145 118 149 110" fill="none" stroke={line} strokeWidth={1.4} strokeLinecap="round" />
       <path d="M152 132 L154 166 L154 205" fill="none" stroke={line} strokeWidth={1.4} />
 
-      {ghost && <path d={ghost} fill="none" stroke="var(--brand)" strokeWidth={1.3} strokeDasharray="3 2.5" />}
-      <path d={tongue} fill="var(--brand-soft)" />
-      <path d={tongueEdge} fill="none" stroke="var(--brand)" strokeWidth={1.6} strokeLinejoin="round" />
+      {ghost && <path d={ghost} fill="none" stroke="var(--accent)" strokeWidth={1.3} strokeDasharray="3 2.5" />}
+      <path d={tongue} fill="var(--accent-soft)" />
+      <path d={tongueEdge} fill="none" stroke="var(--accent)" strokeWidth={1.6} strokeLinejoin="round" />
 
       <path d={lowerTooth(pose.jaw)} fill="var(--surface)" stroke={line} strokeWidth={1} />
       <path d={UPPER_TOOTH} fill="var(--surface)" stroke={line} strokeWidth={1} />
@@ -210,7 +210,7 @@ export function MouthDiagram({ sound, className }: { sound: Sound; className?: s
       <text x={96} y={32} textAnchor="middle" className={label}>
         鼻
       </text>
-      <text x={100} y={100} textAnchor="middle" className="fill-brand text-[9px] font-bold">
+      <text x={100} y={100} textAnchor="middle" className="fill-accent text-[9px] font-bold">
         舌
       </text>
       <text x={144} y={190} textAnchor="middle" className={label}>
@@ -221,7 +221,7 @@ export function MouthDiagram({ sound, className }: { sound: Sound; className?: s
         <path
           d={smooth([[155, 104], [158, 62], [154, 36], [120, 24], [70, 26], [36, 38], [12, 46]])}
           fill="none"
-          stroke="var(--gold)"
+          stroke="var(--breath)"
           strokeWidth={1.8}
           strokeDasharray="4 3"
           markerEnd={`url(#air-${id})`}
@@ -231,7 +231,7 @@ export function MouthDiagram({ sound, className }: { sound: Sound; className?: s
         <path
           d={oralAirPath(pose.tongue)}
           fill="none"
-          stroke="var(--gold)"
+          stroke="var(--breath)"
           strokeWidth={1.5}
           strokeDasharray="4 3"
           markerEnd={`url(#air-${id})`}
@@ -241,7 +241,7 @@ export function MouthDiagram({ sound, className }: { sound: Sound; className?: s
       {/* vocal folds; when voiced the throat buzzes */}
       <path d="M154 172 L160 172 M170 172 L164 172" stroke={line} strokeWidth={2.2} strokeLinecap="round" />
       {pose.voiced && (
-        <g stroke="var(--indigo)" strokeWidth={1.6} fill="none" strokeLinecap="round" className="animate-buzz">
+        <g stroke="var(--voice)" strokeWidth={1.6} fill="none" strokeLinecap="round" className="animate-buzz">
           <path d="M124 160 q-3 4 0 8 q3 4 0 8 q-3 4 0 8" />
           <path d="M117 157 q-4 5.5 0 11 q4 5.5 0 11 q-4 5.5 0 11" opacity={0.55} />
         </g>
@@ -251,7 +251,7 @@ export function MouthDiagram({ sound, className }: { sound: Sound; className?: s
         <path
           d="M64 70 C62 62 58 58 54 54"
           fill="none"
-          stroke="var(--brand)"
+          stroke="var(--accent)"
           strokeWidth={1.6}
           strokeLinecap="round"
           markerEnd={`url(#flick-${id})`}
@@ -260,14 +260,14 @@ export function MouthDiagram({ sound, className }: { sound: Sound; className?: s
       {pose.contact && (
         <g>
           {pose.contact.firm && (
-            <circle cx={pose.contact.at[0]} cy={pose.contact.at[1]} r={4.5} fill="var(--brand)" className="animate-contact" />
+            <circle cx={pose.contact.at[0]} cy={pose.contact.at[1]} r={4.5} fill="var(--accent)" className="animate-contact" />
           )}
           <circle
             cx={pose.contact.at[0]}
             cy={pose.contact.at[1]}
             r={pose.contact.firm ? 3.2 : 4.5}
-            fill={pose.contact.firm ? "var(--brand)" : "none"}
-            stroke="var(--brand)"
+            fill={pose.contact.firm ? "var(--accent)" : "none"}
+            stroke="var(--accent)"
             strokeWidth={1.4}
             strokeDasharray={pose.contact.firm ? undefined : "2 2"}
           />
@@ -276,7 +276,7 @@ export function MouthDiagram({ sound, className }: { sound: Sound; className?: s
 
       {/* a puff of breath out of the mouth */}
       {pose.puff && (
-        <g stroke="var(--gold)" strokeWidth={2.6} fill="none" strokeLinecap="round">
+        <g stroke="var(--breath)" strokeWidth={2.6} fill="none" strokeLinecap="round">
           <path d="M14 66 q-6 9 0 18" className="animate-puff" />
           <path d="M6 62 q-7.5 13 0 26" className="animate-puff [animation-delay:150ms]" />
           <path d="M-3 58 q-9 17 0 34" className="animate-puff [animation-delay:300ms]" />

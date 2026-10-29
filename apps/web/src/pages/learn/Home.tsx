@@ -61,7 +61,7 @@ function whenLabel(iso: string) {
 function Stat({ n, label }: { n: number; label: string }) {
   return (
     <div>
-      <p className="font-display text-[40px] leading-none font-extrabold tabular-nums">{n}</p>
+      <p className="text-[40px] leading-none font-extrabold tabular-nums">{n}</p>
       <p className="mt-1 text-[13px] font-bold opacity-80">{label}</p>
     </div>
   );
@@ -85,7 +85,7 @@ function ReviewCard({ summary }: { summary: ReviewSummary }) {
   return (
     <Link
       to="/review"
-      className="press animate-pop relative block overflow-hidden rounded-[28px] bg-gradient-to-br from-brand to-brand-deep p-5 text-white shadow-lift"
+      className="press animate-pop relative block overflow-hidden rounded-[28px] bg-gradient-to-br from-accent to-ink p-5 text-white shadow-lift"
     >
       <Mountains />
       <div className="relative">
@@ -93,7 +93,7 @@ function ReviewCard({ summary }: { summary: ReviewSummary }) {
         <div className="mt-3 flex items-end gap-7">
           {summary.due > 0 && <Stat n={summary.due} label="復習" />}
           {summary.new > 0 && <Stat n={summary.new} label="新しい" />}
-          <span className="ml-auto grid size-14 shrink-0 place-items-center rounded-full bg-white text-brand shadow-lift">
+          <span className="ml-auto grid size-14 shrink-0 place-items-center rounded-full bg-white text-accent shadow-lift">
             <Play className="ml-0.5 size-6" fill="currentColor" />
           </span>
         </div>
@@ -119,12 +119,12 @@ function ContinueCard({ chapter, resumed }: { chapter: ChapterSummary; resumed: 
         <p className="text-[13px] font-bold text-muted">{resumed ? "前回の続き" : "はじめよう"}</p>
         <p className="mt-0.5 truncate text-[17px] font-bold">{chapter.titleJa}</p>
         {preview && (
-          <p lang="ne" className="mt-1 truncate text-[22px] leading-tight font-medium text-indigo">
+          <p lang="ne" className="mt-1 truncate text-[22px] leading-tight font-medium text-voice">
             {preview}
           </p>
         )}
       </div>
-      <span className="grid size-12 shrink-0 place-items-center rounded-full bg-brand-soft text-brand">
+      <span className="grid size-12 shrink-0 place-items-center rounded-full bg-accent-soft text-accent">
         <Play className="ml-0.5 size-5" fill="currentColor" />
       </span>
     </Link>
@@ -141,7 +141,7 @@ function ScriptTile({ chapter, index, wide }: { chapter: ChapterSummary; index: 
       )}
       style={{ animationDelay: `${index * 40}ms` }}
     >
-      <p lang="ne" className="truncate text-[30px] leading-tight font-medium text-indigo">
+      <p lang="ne" className="truncate text-[30px] leading-tight font-medium text-voice">
         {chapter.preview.slice(0, wide ? 4 : 3).join(" ") || "—"}
       </p>
       <p className="mt-3 truncate text-[15px] font-bold">{chapter.titleJa}</p>
@@ -153,7 +153,7 @@ function ScriptTile({ chapter, index, wide }: { chapter: ChapterSummary; index: 
 function PhraseRow({ chapter }: { chapter: ChapterSummary }) {
   return (
     <Link to={`/chapters/${chapter.id}`} className="press flex items-center gap-3.5 px-4 py-3.5 active:bg-surface-2">
-      <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-indigo-soft text-indigo">
+      <span className="grid size-11 shrink-0 place-items-center rounded-2xl bg-voice-soft text-voice">
         <MessagesSquare className="size-5" />
       </span>
       <div className="min-w-0 flex-1">
@@ -187,8 +187,8 @@ export function Home() {
       <header>
         <PrayerFlags />
         <p className="mt-3 text-[13px] font-bold text-muted">{today()}</p>
-        <h1 className="font-display mt-1 text-[28px] leading-tight font-extrabold">
-          <span lang="ne" className="font-ne mr-2 font-semibold text-brand">
+        <h1 className="mt-1 text-[28px] leading-tight font-extrabold">
+          <span lang="ne" className="font-ne mr-2 font-semibold text-accent">
             नमस्ते
           </span>
           {me?.displayName}さん

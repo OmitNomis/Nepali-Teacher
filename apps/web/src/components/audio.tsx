@@ -30,7 +30,7 @@ export function PlayButton({
       }}
       className={clsx(
         "press grid shrink-0 place-items-center rounded-full transition-colors disabled:opacity-30",
-        playing ? "bg-indigo text-surface" : "bg-indigo-soft text-indigo",
+        playing ? "bg-voice text-surface" : "bg-voice-soft text-voice",
         size === "sm" && "size-9",
         size === "md" && "size-11",
         size === "lg" && "size-16",
@@ -111,10 +111,10 @@ export function RecordButton({ itemId, hasAudio }: { itemId: string; hasAudio: b
       className={clsx(
         "press relative grid size-11 shrink-0 place-items-center rounded-full transition-colors",
         recording
-          ? "animate-ring bg-brand text-brand-ink"
+          ? "animate-ring bg-accent text-accent-ink"
           : hasAudio
             ? "bg-surface-2 text-muted"
-            : "bg-brand-soft text-brand",
+            : "bg-accent-soft text-accent",
       )}
     >
       {busy ? (
@@ -135,7 +135,7 @@ function LevelBars({ level, active }: { level: number; active: boolean }) {
       {shape.map((s, i) => (
         <span
           key={i}
-          className={clsx("w-1 rounded-full transition-[height] duration-75", active ? "bg-brand" : "bg-line")}
+          className={clsx("w-1 rounded-full transition-[height] duration-75", active ? "bg-accent" : "bg-line")}
           style={{ height: `${Math.max(14, active ? level * s * 100 : 14)}%` }}
         />
       ))}
@@ -180,7 +180,7 @@ export function StudioRecorder({ itemId, onSaved }: { itemId: string; onSaved: (
           onClick={() => (recording ? rec.stop() : void rec.start())}
           disabled={rec.state === "starting"}
           className={clsx(
-            "press grid size-20 place-items-center rounded-full bg-brand text-brand-ink shadow-lift",
+            "press grid size-20 place-items-center rounded-full bg-accent text-accent-ink shadow-lift",
             recording && "animate-ring",
           )}
         >

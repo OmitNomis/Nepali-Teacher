@@ -97,7 +97,7 @@ export function AdminChapters() {
             <HeaderButton label="Import JSON" onClick={() => setImporting(true)}>
               <FileUp className="size-[18px]" />
             </HeaderButton>
-            <HeaderButton label="New chapter" tone="brand" onClick={() => setCreating(true)}>
+            <HeaderButton label="New chapter" tone="accent" onClick={() => setCreating(true)}>
               <Plus className="size-5" />
             </HeaderButton>
           </>

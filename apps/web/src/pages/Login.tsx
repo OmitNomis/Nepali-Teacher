@@ -64,7 +64,7 @@ export function Login() {
             <p lang="ne" className="text-[64px] leading-tight font-semibold drop-shadow-[0_2px_12px_rgb(0_0_0/0.25)]">
               नमस्ते
             </p>
-            <p className="font-display mt-3 text-[17px] font-bold opacity-90">ネパール語を、耳から。</p>
+            <p className="mt-3 text-[17px] font-bold opacity-90">ネパール語を、耳から。</p>
           </div>
         </div>
       </div>
@@ -77,7 +77,7 @@ export function Login() {
         }}
       >
         <div className="mx-auto flex w-full max-w-sm flex-col gap-4 pb-8">
-          <h1 className="font-display text-[22px] font-extrabold">ようこそ</h1>
+          <h1 className="text-[22px] font-extrabold">ようこそ</h1>
           <Field label="ユーザー名">
             {(id) => (
               <TextInput
@@ -102,7 +102,7 @@ export function Login() {
             )}
           </Field>
           {login.error && (
-            <p className="rounded-2xl bg-brand-soft px-4 py-3 text-sm font-bold text-brand">{loginError(login.error)}</p>
+            <p className="rounded-2xl bg-accent-soft px-4 py-3 text-sm font-bold text-accent">{loginError(login.error)}</p>
           )}
           <Button size="lg" type="submit" className="mt-2" loading={login.isPending} disabled={!username || !password}>
             ログイン

@@ -1,48 +1,54 @@
 @import "tailwindcss";
 
-/* Palette: Nepali flag crimson + deep Himalayan blue on warm paper. */
+/*
+ * Ink on mist. Nepali is set in indigo ink; the one bright color, raspberry,
+ * only ever means sound (what plays, what's playing) and, in the mouth
+ * diagrams, the tongue. Gold is breath and violet is voice, as in the diagrams.
+ */
 :root {
-  --bg: #f7f3ec;
+  --bg: #f4f5f9;
   --surface: #ffffff;
-  --surface-2: #f0ebe3;
-  --ink: #1c1a24;
-  --muted: #736d7e;
-  --line: #e7e0d5;
-  --brand: #d4213d;
-  --brand-ink: #ffffff;
-  --brand-soft: #fbe8eb;
-  --brand-deep: #7d1430;
-  --indigo: #24408f;
-  --indigo-soft: #e8edf9;
-  --gold: #925600;
-  --gold-soft: #fbf1df;
-  --ok: #1f7a52;
-  --ok-soft: #e0f2e9;
-  --shadow: 0 1px 2px rgb(40 25 15 / 0.05), 0 6px 20px -10px rgb(40 25 15 / 0.14);
-  --shadow-lift: 0 2px 6px rgb(40 25 15 / 0.06), 0 18px 40px -16px rgb(40 25 15 / 0.28);
+  --surface-2: #eceef5;
+  --ink: #1c2145;
+  --muted: #6b7090;
+  --line: #e0e3ee;
+  --accent: #d6336c;
+  --accent-ink: #ffffff;
+  --accent-soft: #fce8ef;
+  --voice: #5160d8;
+  --voice-soft: #e9ebfc;
+  --breath: #a86400;
+  --breath-soft: #fdf1dc;
+  --ok: #157a4c;
+  --ok-soft: #dff3e8;
+  --miss: #b9550b;
+  --miss-soft: #fcebdc;
+  --shadow: 0 1px 1px rgb(28 33 69 / 0.04), 0 2px 8px -4px rgb(28 33 69 / 0.1);
+  --shadow-lift: 0 1px 2px rgb(28 33 69 / 0.06), 0 16px 36px -18px rgb(28 33 69 / 0.35);
   color-scheme: light;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --bg: #121017;
-    --surface: #1c1922;
-    --surface-2: #27232f;
-    --ink: #f3efe9;
-    --muted: #a39cae;
-    --line: #2f2a39;
-    --brand: #ff5a72;
-    --brand-ink: #ffffff;
-    --brand-soft: #3a1a25;
-    --brand-deep: #5a0f25;
-    --indigo: #a3b5f5;
-    --indigo-soft: #1f2645;
-    --gold: #f0b45a;
-    --gold-soft: #33281a;
-    --ok: #5ccf98;
-    --ok-soft: #173327;
-    --shadow: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px -14px rgb(0 0 0 / 0.6);
-    --shadow-lift: 0 2px 6px rgb(0 0 0 / 0.35), 0 20px 44px -16px rgb(0 0 0 / 0.7);
+    --bg: #11132a;
+    --surface: #1a1d38;
+    --surface-2: #242846;
+    --ink: #eceefa;
+    --muted: #9da2c2;
+    --line: #2d3153;
+    --accent: #ff6f9f;
+    --accent-ink: #1a0b12;
+    --accent-soft: #3c1a2b;
+    --voice: #a7afff;
+    --voice-soft: #262b57;
+    --breath: #f2b95b;
+    --breath-soft: #3a2e17;
+    --ok: #5bd49a;
+    --ok-soft: #15352a;
+    --miss: #ffa05c;
+    --miss-soft: #3b2616;
+    --shadow: 0 1px 1px rgb(0 0 0 / 0.25), 0 2px 10px -4px rgb(0 0 0 / 0.5);
+    --shadow-lift: 0 1px 2px rgb(0 0 0 / 0.3), 0 18px 40px -18px rgb(0 0 0 / 0.75);
     color-scheme: dark;
   }
 }
@@ -54,23 +60,24 @@
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-line: var(--line);
-  --color-brand: var(--brand);
-  --color-brand-ink: var(--brand-ink);
-  --color-brand-soft: var(--brand-soft);
-  --color-brand-deep: var(--brand-deep);
-  --color-indigo: var(--indigo);
-  --color-indigo-soft: var(--indigo-soft);
-  --color-gold: var(--gold);
-  --color-gold-soft: var(--gold-soft);
+  --color-accent: var(--accent);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-voice: var(--voice);
+  --color-voice-soft: var(--voice-soft);
+  --color-breath: var(--breath);
+  --color-breath-soft: var(--breath-soft);
   --color-ok: var(--ok);
   --color-ok-soft: var(--ok-soft);
+  --color-miss: var(--miss);
+  --color-miss-soft: var(--miss-soft);
   --shadow-card: var(--shadow);
   --shadow-lift: var(--shadow-lift);
-  /* body: the phone's own Japanese font (Hiragino on iPhone); rounded font for headings only */
+  /* Japanese in the phone's own font (Hiragino on iPhone); Nepali, and its
+     romanization in italic, in Tiro Devanagari */
   --font-sans: -apple-system, BlinkMacSystemFont, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Noto Sans JP",
-    "Noto Sans Devanagari", system-ui, sans-serif;
-  --font-display: "M PLUS Rounded 1c", "Hiragino Maru Gothic ProN", "Noto Sans Devanagari", sans-serif;
-  --font-ne: "Noto Sans Devanagari", "Kohinoor Devanagari", sans-serif;
+    system-ui, sans-serif;
+  --font-ne: "Tiro Devanagari Hindi", "Kohinoor Devanagari", "Noto Serif Devanagari", serif;
 }
 
 @layer base {
@@ -82,12 +89,18 @@
     @apply bg-bg text-ink font-sans antialiased;
     min-height: 100dvh;
     overscroll-behavior-y: none;
+    font-feature-settings: "palt";
   }
   :lang(ne) {
     font-family: var(--font-ne);
+    font-feature-settings: normal;
   }
   button {
     cursor: pointer;
+  }
+  :focus-visible {
+    outline: 2px solid var(--voice);
+    outline-offset: 2px;
   }
   input,
   textarea,
@@ -95,6 +108,31 @@
     /* iOS zooms into inputs smaller than 16px */
     font-size: 16px;
   }
+}
+
+/* Romanization: italic Tiro, so it reads as part of the Nepali, not the Japanese. */
+@utility roman {
+  font-family: var(--font-ne);
+  font-style: italic;
+  font-feature-settings: normal;
+}
+
+/*
+ * Karaoke wipe: while a clip plays, its Nepali fills with the accent from left
+ * to right. --wipe (0–100%) is driven from the audio's playback position.
+ */
+@property --wipe {
+  syntax: "<percentage>";
+  inherits: true;
+  initial-value: 0%;
+}
+@utility karaoke {
+  background-image: linear-gradient(90deg, var(--accent) var(--wipe), currentColor var(--wipe));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  -webkit-box-decoration-break: clone;
+  box-decoration-break: clone;
 }
 
 @utility pt-safe {
@@ -110,7 +148,7 @@
   }
 }
 @utility press {
-  transition: transform 120ms ease, background-color 150ms ease, opacity 150ms ease;
+  transition: transform 120ms ease, background-color 150ms ease, border-color 150ms ease, opacity 150ms ease;
   &:active {
     transform: scale(0.97);
   }
@@ -120,20 +158,29 @@
   from { transform: translateY(100%); }
   to { transform: translateY(0); }
 }
+@keyframes dialog-in {
+  from { opacity: 0; transform: translateY(12px) scale(0.98); }
+  to { opacity: 1; transform: none; }
+}
 @keyframes fade-in {
   from { opacity: 0; }
   to { opacity: 1; }
 }
 @keyframes pop-in {
-  0% { opacity: 0; transform: translateY(8px) scale(0.98); }
+  0% { opacity: 0; transform: translateY(6px); }
   100% { opacity: 1; transform: none; }
+}
+/* the login's one page-load moment: नमस्ते sung through once */
+@keyframes wipe-once {
+  0%, 15% { --wipe: 0%; }
+  85%, 100% { --wipe: 100%; }
 }
 @keyframes eq {
   0%, 100% { transform: scaleY(0.35); }
   50% { transform: scaleY(1); }
 }
 @keyframes pulse-ring {
-  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--brand) 45%, transparent); }
+  0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--accent) 45%, transparent); }
   100% { box-shadow: 0 0 0 22px transparent; }
 }
 
@@ -162,14 +209,21 @@
   transform-origin: center;
 }
 
+/* phones slide sheets up from the bottom; wider screens show a dialog */
 @utility animate-sheet {
-  animation: sheet-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1);
+  animation: sheet-in 280ms cubic-bezier(0.2, 0.9, 0.3, 1);
+  @media (width >= 40rem) {
+    animation: dialog-in 220ms cubic-bezier(0.2, 0.9, 0.3, 1);
+  }
 }
 @utility animate-fade {
   animation: fade-in 200ms ease;
 }
 @utility animate-pop {
-  animation: pop-in 320ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+  animation: pop-in 260ms cubic-bezier(0.2, 0.9, 0.3, 1) both;
+}
+@utility animate-wipe-once {
+  animation: wipe-once 2.2s cubic-bezier(0.5, 0, 0.3, 1) 300ms both;
 }
 @utility animate-eq {
   animation: eq 0.9s ease-in-out infinite;
@@ -183,5 +237,9 @@
   *, *::before, *::after {
     animation-duration: 1ms !important;
     transition-duration: 1ms !important;
+  }
+  /* no sweep: playing text just turns the accent color */
+  .karaoke {
+    --wipe: 100% !important;
   }
 }

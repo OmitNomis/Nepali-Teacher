@@ -33,7 +33,7 @@ function LetterTile({ item, index, onInfo }: { item: Item; index: number; onInfo
         className={clsx(
           "press relative flex aspect-square w-full flex-col items-center justify-center rounded-[22px] border transition-all duration-200",
           playing
-            ? "scale-[1.03] border-brand bg-brand text-brand-ink shadow-lift"
+            ? "scale-[1.03] border-accent bg-accent text-accent-ink shadow-lift"
             : "border-line/70 bg-surface shadow-card",
           !item.audioUrl && "border-dashed opacity-50 shadow-none",
         )}
@@ -42,11 +42,11 @@ function LetterTile({ item, index, onInfo }: { item: Item; index: number; onInfo
           {item.ne}
         </span>
         {item.roman && (
-          <span className={clsx("mt-2.5 text-[13px] font-semibold", playing ? "text-brand-ink/85" : "text-muted")}>
+          <span className={clsx("mt-2.5 text-[13px] font-semibold", playing ? "text-accent-ink/85" : "text-muted")}>
             {item.roman}
           </span>
         )}
-        {playing && <EqBars className="absolute top-3 left-3 h-3 text-brand-ink/80" />}
+        {playing && <EqBars className="absolute top-3 left-3 h-3 text-accent-ink/80" />}
       </button>
       {onInfo && (
         // big invisible hit area around a small icon
@@ -56,7 +56,7 @@ function LetterTile({ item, index, onInfo }: { item: Item; index: number; onInfo
           onClick={onInfo}
           className="press absolute right-0 bottom-0 grid size-11 place-items-center"
         >
-          <Info className={clsx("size-[18px] transition-colors", playing ? "text-brand-ink/80" : "text-muted/70")} />
+          <Info className={clsx("size-[18px] transition-colors", playing ? "text-accent-ink/80" : "text-muted/70")} />
         </button>
       )}
     </div>
@@ -68,7 +68,7 @@ function PlayIndicator({ playing, hasAudio }: { playing: boolean; hasAudio: bool
     <span
       className={clsx(
         "grid size-10 shrink-0 place-items-center rounded-full transition-colors",
-        playing ? "bg-brand text-brand-ink" : "bg-indigo-soft text-indigo",
+        playing ? "bg-accent text-accent-ink" : "bg-voice-soft text-voice",
         !hasAudio && "opacity-30",
       )}
     >
@@ -79,7 +79,7 @@ function PlayIndicator({ playing, hasAudio }: { playing: boolean; hasAudio: bool
 
 function Note({ children }: { children: string }) {
   return (
-    <p className="mt-3 flex gap-2 rounded-2xl bg-gold-soft px-3 py-2.5 text-[13px] leading-relaxed text-gold">
+    <p className="mt-3 flex gap-2 rounded-2xl bg-breath-soft px-3 py-2.5 text-[13px] leading-relaxed text-breath">
       <Lightbulb className="mt-0.5 size-4 shrink-0" />
       <span>{children}</span>
     </p>
@@ -96,7 +96,7 @@ function PhraseBody({ item, playing }: { item: Item; playing: boolean }) {
       className="press flex w-full items-center gap-3 text-left"
     >
       <div className="min-w-0 flex-1">
-        <p lang="ne" className={clsx("text-[22px] leading-snug font-medium transition-colors", playing && "text-brand")}>
+        <p lang="ne" className={clsx("text-[22px] leading-snug font-medium transition-colors", playing && "text-accent")}>
           {item.ne}
         </p>
         {item.ja && <p className="mt-1 text-[15px] text-ink/85">{item.ja}</p>}
@@ -110,7 +110,7 @@ function PhraseBody({ item, playing }: { item: Item; playing: boolean }) {
 const cardClass = (playing: boolean) =>
   clsx(
     "rounded-[22px] border bg-surface p-4 shadow-card transition-colors",
-    playing ? "border-brand/50" : "border-line/70",
+    playing ? "border-accent/50" : "border-line/70",
   );
 
 function PhraseCard({ item }: { item: Item }) {
@@ -119,7 +119,7 @@ function PhraseCard({ item }: { item: Item }) {
     <div className={cardClass(playing)}>
       <PhraseBody item={item} playing={playing} />
       {item.register && (
-        <p className="mt-2 text-xs font-bold text-indigo">
+        <p className="mt-2 text-xs font-bold text-voice">
           {REGISTER_INFO[item.register].ja} · {REGISTER_INFO[item.register].hint}
         </p>
       )}
@@ -173,7 +173,7 @@ function VariantCard({ variants }: { variants: Item[] }) {
       </div>
       <div key={item.id} className="animate-fade">
         <PhraseBody item={item} playing={playing} />
-        {info && <p className="mt-2 text-xs font-bold text-indigo">{info.hint}</p>}
+        {info && <p className="mt-2 text-xs font-bold text-voice">{info.hint}</p>}
         {item.note && <Note>{item.note}</Note>}
       </div>
     </div>
@@ -212,7 +212,7 @@ function NowPlayingBar({ items }: { items: Item[] }) {
   return (
     <div className="animate-pop fixed inset-x-0 bottom-[calc(max(env(safe-area-inset-bottom),0.75rem)+4.75rem)] z-30 px-4">
       <div className="mx-auto flex max-w-md items-center gap-3 rounded-full bg-ink py-2 pr-2 pl-5 text-bg shadow-lift">
-        <EqBars className="text-brand" />
+        <EqBars className="text-accent" />
         <p lang="ne" className="min-w-0 flex-1 truncate text-[17px] font-medium">
           {shown?.ne ?? "…"}
         </p>
@@ -269,7 +269,7 @@ export function ChapterView() {
                   to={`/review?chapter=${encodeURIComponent(chapter.id)}`}
                   className="press flex h-10 items-center gap-1.5 rounded-full border border-line/70 bg-surface px-4 text-[13px] font-bold shadow-card"
                 >
-                  <Zap className="size-4 text-gold" fill="currentColor" /> クイズ
+                  <Zap className="size-4 text-breath" fill="currentColor" /> クイズ
                 </Link>
               )}
               <button
@@ -277,7 +277,7 @@ export function ChapterView() {
                 onClick={() => (queueActive ? stop() : playAll(urls))}
                 className={clsx(
                   "press flex h-10 items-center gap-1.5 rounded-full px-4 text-[13px] font-bold shadow-card",
-                  queueActive ? "bg-ink text-bg" : "bg-brand text-brand-ink",
+                  queueActive ? "bg-ink text-bg" : "bg-accent text-accent-ink",
                 )}
               >
                 {queueActive ? (

@@ -22,7 +22,7 @@ function Tab({
       aria-current={active ? "page" : undefined}
       className={clsx(
         "press flex flex-1 flex-col items-center justify-center gap-0.5 rounded-full py-1.5 text-[10px] font-bold transition-colors",
-        active ? "bg-brand-soft text-brand" : "text-muted",
+        active ? "bg-accent-soft text-accent" : "text-muted",
       )}
     >
       {icon}

@@ -15,7 +15,7 @@ export function RecordingMeter({ itemCount, missing, tts }: { itemCount: number;
     <div className="flex flex-col gap-1.5">
       <div className="flex h-1.5 overflow-hidden rounded-full bg-surface-2">
         <div className="bg-ok transition-[width] duration-500" style={{ width: pct(recorded) }} />
-        <div className="bg-indigo/40 transition-[width] duration-500" style={{ width: pct(tts) }} />
+        <div className="bg-voice/40 transition-[width] duration-500" style={{ width: pct(tts) }} />
       </div>
       <p className="text-xs text-muted">
         {recorded === itemCount ? (
@@ -457,7 +457,7 @@ export function ImportSheet({
             }}
           />
         </label>
-        {error && <p className="rounded-2xl bg-brand-soft px-4 py-3 text-sm font-bold text-brand">{error}</p>}
+        {error && <p className="rounded-2xl bg-accent-soft px-4 py-3 text-sm font-bold text-accent">{error}</p>}
         <Button onClick={() => run.mutate()} loading={run.isPending} disabled={!text.trim()}>
           Import
         </Button>

@@ -35,16 +35,16 @@ const MANNER: Record<Manner, string> = {
   approximant: "近づけるだけ",
 };
 
-type Tone = "brand" | "gold" | "indigo" | "muted";
+type Tone = "accent" | "breath" | "voice" | "muted";
 
 function Chip({ tone, children }: { tone: Tone; children: ReactNode }) {
   return (
     <span
       className={clsx(
         "inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-[13px] font-bold",
-        tone === "brand" && "bg-brand-soft text-brand",
-        tone === "gold" && "bg-gold-soft text-gold",
-        tone === "indigo" && "bg-indigo-soft text-indigo",
+        tone === "accent" && "bg-accent-soft text-accent",
+        tone === "breath" && "bg-breath-soft text-breath",
+        tone === "voice" && "bg-voice-soft text-voice",
         tone === "muted" && "bg-surface-2 text-muted",
       )}
     >
@@ -56,10 +56,10 @@ function Chip({ tone, children }: { tone: Tone; children: ReactNode }) {
 function ConsonantChips({ sound }: { sound: ConsonantSound }) {
   return (
     <>
-      <Chip tone="brand">{PLACE[sound.place]}</Chip>
+      <Chip tone="accent">{PLACE[sound.place]}</Chip>
       <Chip tone="muted">{MANNER[sound.manner]}</Chip>
-      {sound.aspirated ? <Chip tone="gold">息を強く出す</Chip> : <Chip tone="muted">息は出さない</Chip>}
-      {sound.voiced ? <Chip tone="indigo">声あり（のどが震える）</Chip> : <Chip tone="muted">声なし</Chip>}
+      {sound.aspirated ? <Chip tone="breath">息を強く出す</Chip> : <Chip tone="muted">息は出さない</Chip>}
+      {sound.voiced ? <Chip tone="voice">声あり（のどが震える）</Chip> : <Chip tone="muted">声なし</Chip>}
     </>
   );
 }
@@ -68,13 +68,13 @@ function VowelChips({ sound }: { sound: VowelSound }) {
   const { height, back, round } = sound.shape;
   return (
     <>
-      <Chip tone="brand">
+      <Chip tone="accent">
         {height === "high" ? "口は狭く" : height === "mid" ? "口は中くらい" : "口を大きく開ける"}
       </Chip>
       <Chip tone="muted">{back === "front" ? "舌は前" : back === "back" ? "舌は奥" : "舌は真ん中"}</Chip>
       {round && <Chip tone="muted">唇を丸める</Chip>}
-      {sound.nasal && <Chip tone="gold">鼻に響かせる</Chip>}
-      {sound.breath && <Chip tone="gold">最後に息を吐く</Chip>}
+      {sound.nasal && <Chip tone="breath">鼻に響かせる</Chip>}
+      {sound.breath && <Chip tone="breath">最後に息を吐く</Chip>}
     </>
   );
 }
@@ -110,10 +110,10 @@ function BreathVoiceGrid({
       <div className="grid grid-cols-[auto_1fr_1fr] items-center gap-2 text-center">
         <span />
         <span className="text-xs font-bold text-muted">息なし</span>
-        <span className="text-xs font-bold text-gold">息あり</span>
+        <span className="text-xs font-bold text-breath">息あり</span>
         {[false, true].map((voiced) => (
           <div key={String(voiced)} className="contents">
-            <span className={clsx("w-12 text-xs font-bold", voiced ? "text-indigo" : "text-muted")}>
+            <span className={clsx("w-12 text-xs font-bold", voiced ? "text-voice" : "text-muted")}>
               {voiced ? "声あり" : "声なし"}
             </span>
             {[false, true].map((aspirated) => {
@@ -128,13 +128,13 @@ function BreathVoiceGrid({
                   onClick={() => url && play(url)}
                   className={clsx(
                     "press relative flex h-16 items-center justify-center rounded-2xl border-2 bg-surface transition-colors disabled:opacity-40",
-                    l === letter ? "border-brand" : "border-transparent",
+                    l === letter ? "border-accent" : "border-transparent",
                   )}
                 >
                   <span lang="ne" className="text-[32px] leading-none font-medium">
                     {l}
                   </span>
-                  {playing && <EqBars className="absolute top-2 right-2 h-3 text-brand" />}
+                  {playing && <EqBars className="absolute top-2 right-2 h-3 text-accent" />}
                 </button>
               );
             })}
