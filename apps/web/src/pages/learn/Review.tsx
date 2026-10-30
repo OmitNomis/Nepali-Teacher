@@ -1,10 +1,10 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import clsx from "clsx";
-import { Check, Headphones, PartyPopper, Sparkles, Volume2, X } from "lucide-react";
+import { Check, Headphones, Sparkles, Volume2, X } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
 import { soundKey } from "@nt/shared";
-import { EqBars } from "../../components/audio";
+import { EqBars, Karaoke } from "../../components/audio";
 import { PronunciationGuide } from "../../components/Pronunciation";
 import { Button, PageLoader, useToast } from "../../components/ui";
 import { client, unwrap, type QuizItem, type SessionCard } from "../../lib/api";
@@ -28,14 +28,15 @@ function SoundButton({ item, size = "md", className }: { item: QuizItem; size?: 
       onClick={() => play(item.audioUrl)}
       className={clsx(
         "press grid shrink-0 place-items-center rounded-full transition-colors",
-        size === "xl" ? "size-24 bg-accent text-accent-ink shadow-lift" : "size-11 bg-voice-soft text-voice",
+        size === "xl" ? "size-32 bg-accent text-accent-ink shadow-lift" : "size-11 bg-accent-soft text-accent",
+        size === "xl" && playing && "animate-ring",
         className,
       )}
     >
       {playing ? (
-        <EqBars className={size === "xl" ? "h-8 [&>span]:w-1.5" : undefined} />
+        <EqBars className={size === "xl" ? "h-9 [&>span]:w-2" : undefined} />
       ) : size === "xl" ? (
-        <Headphones className="size-10" />
+        <Headphones className="size-12" />
       ) : (
         <Volume2 className="size-5" />
       )}
@@ -46,32 +47,32 @@ function SoundButton({ item, size = "md", className }: { item: QuizItem; size?: 
 function Intro({ item, onDone }: { item: QuizItem; onDone: () => void }) {
   return (
     <div className="animate-pop flex flex-1 flex-col items-center text-center">
-      <span className="inline-flex items-center gap-1 rounded-full bg-breath-soft px-3 py-1 text-xs font-bold text-breath">
+      <span className="inline-flex items-center gap-1 rounded-full bg-breath-soft px-3 py-1 text-[13px] font-bold text-breath">
         <Sparkles className="size-3.5" /> 新しい文字
       </span>
-      <div className="mt-3 flex items-center gap-5">
-        <p lang="ne" className="text-[88px] leading-none font-medium">
+      <div className="mt-4 flex items-center gap-6">
+        <Karaoke url={item.audioUrl} className="text-[96px] leading-none">
           {item.ne}
-        </p>
+        </Karaoke>
         <div className="flex flex-col items-center gap-2">
-          {item.roman && <p className="text-2xl font-bold text-muted">{item.roman}</p>}
+          {item.roman && <p className="roman text-[26px] text-muted">{item.roman}</p>}
           <SoundButton item={item} />
         </div>
       </div>
-      <div className="mt-3 w-full text-left">
+      <div className="mt-4 w-full text-left">
         <PronunciationGuide letter={item.ne} compact />
       </div>
       <Button size="lg" className="mt-auto w-full shrink-0" onClick={onDone}>
-        覚えた！
+        覚えた
       </Button>
     </div>
   );
 }
 
-function OptionState({ option, card, result }: { option: QuizItem; card: SessionCard; result: Result | null }) {
+function OptionMark({ option, card, result }: { option: QuizItem; card: SessionCard; result: Result | null }) {
   if (!result) return null;
-  if (sameSound(option, card.prompt)) return <Check className="absolute top-2 right-2 size-5 text-ok" />;
-  if (option.id === result.chosenId) return <X className="absolute top-2 right-2 size-5 text-accent" />;
+  if (sameSound(option, card.prompt)) return <Check className="absolute top-2.5 right-2.5 size-5 text-ok" />;
+  if (option.id === result.chosenId) return <X className="absolute top-2.5 right-2.5 size-5 text-miss" />;
   return null;
 }
 
@@ -80,18 +81,18 @@ const optionTone = (option: QuizItem, card: SessionCard, result: Result | null, 
     ? sameSound(option, card.prompt)
       ? "border-ok bg-ok-soft"
       : option.id === result.chosenId
-        ? "border-accent bg-accent-soft"
-        : "border-line/70 bg-surface opacity-60"
+        ? "border-miss bg-miss-soft"
+        : "border-transparent bg-surface opacity-50"
     : selected
-      ? "border-accent bg-surface ring-4 ring-accent/15"
-      : "border-line/70 bg-surface";
+      ? "border-ink bg-surface"
+      : "border-transparent bg-surface shadow-card";
 
 /** Hear it, pick the letter. */
 function ListenQuestion({ card, result, onAnswer }: QuestionProps) {
   return (
     <div className="flex flex-1 flex-col">
-      <p className="text-center text-[15px] font-bold text-muted">聞こえた文字はどれ？</p>
-      <div className="flex flex-1 items-center justify-center py-4">
+      <p className="text-center text-[17px] font-bold">聞こえた文字はどれ？</p>
+      <div className="flex flex-1 items-center justify-center py-6">
         <SoundButton item={card.prompt} size="xl" />
       </div>
       <div className="grid grid-cols-2 gap-3">
@@ -102,15 +103,15 @@ function ListenQuestion({ card, result, onAnswer }: QuestionProps) {
             disabled={!!result}
             onClick={() => onAnswer(o.id)}
             className={clsx(
-              "press relative flex h-28 flex-col items-center justify-center rounded-[22px] border-2 shadow-card transition-colors",
+              "press relative flex h-32 flex-col items-center justify-center rounded-[22px] border-2 transition-colors",
               optionTone(o, card, result, false),
             )}
           >
-            <span lang="ne" className="text-[52px] leading-none font-medium">
+            <span lang="ne" className="text-[56px] leading-none">
               {o.ne}
             </span>
-            {result && o.roman && <span className="mt-2 text-[13px] font-bold text-muted">{o.roman}</span>}
-            <OptionState option={o} card={card} result={result} />
+            {result && o.roman && <span className="roman mt-2 text-[15px] text-muted">{o.roman}</span>}
+            <OptionMark option={o} card={card} result={result} />
           </button>
         ))}
       </div>
@@ -125,44 +126,46 @@ function ReadQuestion({ card, result, onAnswer }: QuestionProps) {
   const nowPlaying = useNowPlaying();
   return (
     <div className="flex flex-1 flex-col">
-      <p className="text-center text-[15px] font-bold text-muted">この文字の音はどれ？</p>
-      <div className="flex flex-1 items-center justify-center py-4">
-        <p lang="ne" className="text-[96px] leading-none font-medium">
+      <p className="text-center text-[17px] font-bold">この文字の音はどれ？</p>
+      <div className="flex flex-1 items-center justify-center py-6">
+        <p lang="ne" className="text-[112px] leading-none">
           {card.prompt.ne}
         </p>
       </div>
       <div className="grid grid-cols-2 gap-3">
-        {card.options.map((o, i) => (
-          <button
-            key={o.id}
-            type="button"
-            onClick={() => {
-              play(o.audioUrl);
-              if (!result) setSelected(o.id);
-            }}
-            className={clsx(
-              "press relative flex h-[5.5rem] flex-col items-center justify-center gap-1 rounded-[22px] border-2 shadow-card transition-colors",
-              optionTone(o, card, result, selected === o.id),
-            )}
-          >
-            {nowPlaying === o.audioUrl ? (
-              <EqBars className="h-6 text-accent" />
-            ) : (
-              <Volume2 className={clsx("size-6", selected === o.id && !result ? "text-accent" : "text-voice")} />
-            )}
-            {result ? (
-              <span className="text-[13px] font-bold">
-                <span lang="ne" className="mr-1 text-base">
-                  {o.ne}
+        {card.options.map((o) => {
+          const playing = nowPlaying === o.audioUrl;
+          return (
+            <button
+              key={o.id}
+              type="button"
+              aria-label={result ? o.roman || o.ne : "聞く"}
+              onClick={() => {
+                play(o.audioUrl);
+                if (!result) setSelected(o.id);
+              }}
+              className={clsx(
+                "press relative flex h-24 flex-col items-center justify-center gap-1.5 rounded-[22px] border-2 transition-colors",
+                optionTone(o, card, result, selected === o.id),
+              )}
+            >
+              {playing ? (
+                <EqBars className="h-6 text-accent" />
+              ) : (
+                <Volume2 className={clsx("size-6", selected === o.id && !result ? "text-ink" : "text-accent")} />
+              )}
+              {result && (
+                <span className="flex items-baseline gap-1.5">
+                  <span lang="ne" className="text-[20px]">
+                    {o.ne}
+                  </span>
+                  <span className="roman text-[15px] text-muted">{o.roman}</span>
                 </span>
-                {o.roman}
-              </span>
-            ) : (
-              <span className="text-xs font-bold text-muted">{i + 1}</span>
-            )}
-            <OptionState option={o} card={card} result={result} />
-          </button>
-        ))}
+              )}
+              <OptionMark option={o} card={card} result={result} />
+            </button>
+          );
+        })}
       </div>
       <BottomSlot>
         {!result && (
@@ -187,31 +190,31 @@ function Feedback({ card, result, onNext }: { card: SessionCard; result: Result;
   return (
     <div
       className={clsx(
-        "animate-sheet fixed inset-x-0 bottom-0 z-40 rounded-t-[28px] px-5 pt-5 pb-[max(env(safe-area-inset-bottom),1.25rem)] shadow-lift",
-        result.correct ? "bg-ok-soft" : "bg-accent-soft",
+        "animate-sheet fixed inset-x-0 bottom-0 z-40 rounded-t-[28px] px-5 pt-5 pb-[max(env(safe-area-inset-bottom),1.25rem)]",
+        result.correct ? "bg-ok-soft" : "bg-miss-soft",
       )}
     >
-      <div className="mx-auto flex max-w-2xl flex-col gap-4">
-        <div className="flex items-center gap-3">
-          <p className={clsx("flex-1 text-[22px] font-extrabold", result.correct ? "text-ok" : "text-accent")}>
-            {result.correct ? "正解！" : "ざんねん…"}
-          </p>
-          {!result.correct && (
-            <div className="flex items-center gap-2">
-              <span lang="ne" className="text-3xl font-medium">
+      <div className="mx-auto flex max-w-lg flex-col gap-4">
+        <div className="flex min-h-11 items-center gap-3">
+          {result.correct ? (
+            <p className="flex-1 text-[22px] font-bold text-ok">正解</p>
+          ) : (
+            <>
+              <p className="text-[17px] font-bold text-miss">答えは</p>
+              <Karaoke url={card.prompt.audioUrl} className="text-[34px] leading-none">
                 {card.prompt.ne}
-              </span>
-              <span className="text-sm font-bold text-muted">{card.prompt.roman}</span>
+              </Karaoke>
+              <span className="roman flex-1 text-[17px] text-muted">{card.prompt.roman}</span>
               <SoundButton item={card.prompt} />
-            </div>
+            </>
           )}
         </div>
         <button
           type="button"
           onClick={onNext}
           className={clsx(
-            "press h-14 rounded-full text-[17px] font-bold text-white shadow-card",
-            result.correct ? "bg-ok" : "bg-accent",
+            "press h-[52px] rounded-full text-[17px] font-bold text-white",
+            result.correct ? "bg-ok" : "bg-miss",
           )}
         >
           次へ
@@ -224,13 +227,13 @@ function Feedback({ card, result, onNext }: { card: SessionCard; result: Result;
 function Finished({ right, total, back, onAgain }: { right: number; total: number; back: string; onAgain?: () => void }) {
   return (
     <div className="animate-pop flex flex-1 flex-col items-center justify-center text-center">
-      <div className="grid size-24 place-items-center rounded-full bg-breath-soft text-breath">
-        <PartyPopper className="size-11" />
+      <div className="grid size-20 place-items-center rounded-full bg-ok-soft text-ok">
+        <Check className="size-10" />
       </div>
-      <p className="mt-6 text-[28px] font-extrabold">おつかれさま！</p>
+      <p className="mt-6 text-[28px] font-bold">おつかれさま</p>
       {total > 0 && (
         <p className="mt-2 text-[17px] text-muted">
-          {total}問中 <span className="font-bold text-ink">{right}問</span> 一回で正解
+          {total}問中 <span className="font-bold text-ink">{right}問</span>を一回で正解
         </p>
       )}
       <div className="mt-auto flex w-full flex-col gap-3">
@@ -241,11 +244,37 @@ function Finished({ right, total, back, onAgain }: { right: number; total: numbe
         )}
         <Link
           to={back}
-          className="press flex h-14 items-center justify-center rounded-full border border-line bg-surface text-[17px] font-bold shadow-card"
+          className="press flex h-[52px] items-center justify-center rounded-full border border-line bg-surface text-[17px] font-bold"
         >
           戻る
         </Link>
       </div>
+    </div>
+  );
+}
+
+/** Start screen: the letters this session covers are the headline. */
+function Ready({ cards, title, onStart }: { cards: SessionCard[]; title: string; onStart: () => void }) {
+  const letters = [...new Set(cards.map((c) => c.prompt.ne))];
+  const fresh = new Set(cards.filter((c) => c.isNew).map((c) => c.itemId)).size;
+  return (
+    <div className="animate-pop flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col justify-center">
+        <p className="text-[17px] font-bold text-muted">{title}</p>
+        <p lang="ne" className="mt-3 text-[52px] leading-[1.2] tracking-wide break-words">
+          {letters.slice(0, 8).join(" ")}
+          {letters.length > 8 && <span className="text-muted"> …</span>}
+        </p>
+        <p className="mt-4 text-[17px]">
+          {cards.length}問{fresh > 0 && `、そのうち新しい文字が${fresh}個`}
+        </p>
+        <p className="mt-6 max-w-sm text-[15px] leading-relaxed text-muted">
+          音を聞いて文字を選んだり、文字を見て音を選んだりします。音が出る状態にしておいてください。
+        </p>
+      </div>
+      <Button size="lg" className="w-full" onClick={onStart}>
+        はじめる
+      </Button>
     </div>
   );
 }
@@ -356,16 +385,16 @@ export function Review() {
   const progress = queue ? Math.min(pos, queue.length) / Math.max(queue.length, 1) : 0;
 
   return (
-    <div className="pt-safe mx-auto flex min-h-dvh max-w-2xl flex-col px-4 pb-[max(env(safe-area-inset-bottom),1.25rem)]">
+    <div className="pt-safe mx-auto flex min-h-dvh max-w-lg flex-col px-5 pb-[max(env(safe-area-inset-bottom),1.25rem)]">
       <header className="flex items-center gap-3 py-3">
         <Link
           to={back}
           aria-label="やめる"
-          className="press grid size-10 shrink-0 place-items-center rounded-full border border-line/70 bg-surface shadow-card"
+          className="press grid size-10 shrink-0 place-items-center rounded-full border border-line bg-surface"
         >
           <X className="size-5" />
         </Link>
-        <div className="h-2.5 flex-1 overflow-hidden rounded-full bg-surface-2">
+        <div className="h-2 flex-1 overflow-hidden rounded-full bg-surface-2">
           <div className="h-full rounded-full bg-ok transition-[width] duration-500" style={{ width: `${progress * 100}%` }} />
         </div>
         {queue && !done && (
@@ -384,33 +413,20 @@ export function Review() {
             <div className="grid size-20 place-items-center rounded-full bg-ok-soft text-ok">
               <Check className="size-10" />
             </div>
-            <p className="mt-5 text-2xl font-extrabold">今はクイズがありません</p>
-            <p className="mt-2 text-muted">
-              {chapterId ? "この章の音声がまだ準備中かもしれません。" : "今日の復習はおしまい！また明日。"}
+            <p className="mt-5 text-[22px] font-bold">今はクイズがありません</p>
+            <p className="mt-2 max-w-xs text-[15px] text-muted">
+              {chapterId ? "この章の音声がそろうと、クイズができるようになります。" : "今日の復習はおしまいです。次の復習は明日以降に出てきます。"}
             </p>
-            <Link to={back} className="press mt-8 font-bold text-accent">
+            <Link to={back} className="press mt-8 font-bold text-voice">
               戻る
             </Link>
           </div>
         ) : (
-          <div className="animate-pop flex flex-1 flex-col items-center justify-center text-center">
-            <div className="grid size-24 place-items-center rounded-full bg-accent-soft text-accent">
-              <Headphones className="size-11" />
-            </div>
-            <p className="mt-6 text-[28px] font-extrabold">
-              {session.mode === "practice" ? "練習しよう" : chapterId ? "クイズ" : "今日の復習"}
-            </p>
-            <p className="mt-2 text-[17px] text-muted">
-              {session.cards.length}問
-              {session.cards.some((c) => c.isNew) && ` · 新しい文字 ${new Set(session.cards.filter((c) => c.isNew).map((c) => c.itemId)).size}個`}
-            </p>
-            <p className="mt-6 max-w-xs text-sm leading-relaxed text-muted">
-              音を聞いて文字を選んだり、文字を見て音を選んだりします。音が出るようにしてね🔈
-            </p>
-            <Button size="lg" className="mt-auto w-full" onClick={start}>
-              はじめる
-            </Button>
-          </div>
+          <Ready
+            cards={session.cards}
+            title={session.mode === "practice" ? "練習" : chapterId ? "クイズ" : "今日の復習"}
+            onStart={start}
+          />
         )
       ) : done ? (
         <Finished
