@@ -12,6 +12,9 @@
   --ink: #1c2145;
   --muted: #6b7090;
   --line: #e0e3ee;
+  /* the one deep panel per screen (today's review), and what sits on it */
+  --deep: #1c2145;
+  --on-deep: #f4f5f9;
   --accent: #d6336c;
   --accent-ink: #ffffff;
   --accent-soft: #fce8ef;
@@ -36,6 +39,8 @@
     --ink: #eceefa;
     --muted: #9da2c2;
     --line: #2d3153;
+    --deep: #2b3066;
+    --on-deep: #eceefa;
     --accent: #ff6f9f;
     --accent-ink: #1a0b12;
     --accent-soft: #3c1a2b;
@@ -60,6 +65,8 @@
   --color-ink: var(--ink);
   --color-muted: var(--muted);
   --color-line: var(--line);
+  --color-deep: var(--deep);
+  --color-on-deep: var(--on-deep);
   --color-accent: var(--accent);
   --color-accent-ink: var(--accent-ink);
   --color-accent-soft: var(--accent-soft);
