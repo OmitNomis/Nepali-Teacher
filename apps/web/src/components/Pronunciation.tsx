@@ -11,7 +11,7 @@ import {
   type VowelSound,
 } from "@nt/shared";
 import { play, useNowPlaying } from "../lib/player";
-import { EqBars, PlayButton } from "./audio";
+import { EqBars, Karaoke, PlayButton } from "./audio";
 import { MouthDiagram } from "./MouthDiagram";
 import { Sheet } from "./ui";
 
@@ -128,12 +128,12 @@ function BreathVoiceGrid({
                   onClick={() => url && play(url)}
                   className={clsx(
                     "press relative flex h-16 items-center justify-center rounded-2xl border-2 bg-surface transition-colors disabled:opacity-40",
-                    l === letter ? "border-accent" : "border-transparent",
+                    l === letter ? "border-ink" : "border-transparent",
                   )}
                 >
-                  <span lang="ne" className="text-[32px] leading-none font-medium">
+                  <Karaoke url={url} className="text-[34px] leading-none">
                     {l}
-                  </span>
+                  </Karaoke>
                   {playing && <EqBars className="absolute top-2 right-2 h-3 text-accent" />}
                 </button>
               );
@@ -175,7 +175,7 @@ export function PronunciationGuide({
               {i > 0 && <ArrowRight className="size-5 shrink-0 text-muted" />}
               <div className="min-w-0 flex-1 text-center">
                 <MouthDiagram sound={s.sound} className="w-full" />
-                <span lang="ne" className="text-xl font-medium">
+                <span lang="ne" className="text-xl">
                   {s.letter}
                 </span>
               </div>
@@ -214,10 +214,10 @@ export function PronunciationSheet({
       {item && (
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-center gap-4">
-            <span lang="ne" className="text-[56px] leading-none font-medium">
+            <Karaoke url={item.audioUrl} className="text-[64px] leading-none">
               {item.ne}
-            </span>
-            {item.roman && <span className="text-xl font-bold text-muted">{item.roman}</span>}
+            </Karaoke>
+            {item.roman && <span className="roman text-[24px] text-muted">{item.roman}</span>}
             <PlayButton url={item.audioUrl} />
           </div>
           <PronunciationGuide letter={item.ne} audioFor={audioFor} />
