@@ -10,6 +10,8 @@ let run: { urls: string[]; index: number } | null = null;
 let gapTimer: ReturnType<typeof setTimeout> | undefined;
 // pause events are async; ignore the one we cause when switching clips
 let switching = false;
+// counts start() calls, to tell a superseded play() from the latest one
+let attempt = 0;
 const listeners = new Set<() => void>();
 
 const QUEUE_GAP_MS = 900;
@@ -65,7 +67,11 @@ function start(url: string) {
   el.src = url;
   if (run) run.index = run.urls.length - queue.length - 1;
   setCurrent(url);
+  const mine = ++attempt;
   el.play().catch(() => {
+    // tapping another clip before this one started rejects this play() with
+    // an AbortError; that newer clip now owns the state, so leave it alone
+    if (mine !== attempt) return;
     switching = false;
     queue = [];
     run = null;
