@@ -18,13 +18,13 @@ export function RecordQueue() {
 
   return (
     // fills the screen above the tab bar, so the record button is always in reach
-    <div className="flex min-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-6.5rem)] flex-col">
+    <div className="mx-auto flex min-h-[calc(100dvh-env(safe-area-inset-top)-env(safe-area-inset-bottom)-var(--nav-h)-2.5rem)] w-full max-w-lg flex-col">
       <header className="flex items-center gap-3 pt-7 pb-3">
         <div className="min-w-0 flex-1">
-          <h1 className="text-[28px] leading-tight font-extrabold tracking-tight">Record</h1>
+          <h1 className="text-[30px] leading-tight font-bold sm:text-[36px]">Record</h1>
           {remaining.length > 0 && (
             <p className="truncate text-[15px] text-muted">
-              {remaining.length} left{done.size ? ` · ${done.size} recorded this session` : ""}
+              {remaining.length} left{done.size ? `, ${done.size} recorded this session` : ""}
             </p>
           )}
         </div>
@@ -59,13 +59,13 @@ export function RecordQueue() {
             <p
               lang="ne"
               className={clsx(
-                "mt-2 font-medium",
+                "mt-2",
                 current.kind === "letter" ? "text-7xl leading-tight" : "text-4xl leading-snug",
               )}
             >
               {current.ne}
             </p>
-            {current.roman && <p className="mt-2 text-lg font-bold text-muted">{current.roman}</p>}
+            {current.roman && <p className="roman mt-2 text-[20px] text-muted">{current.roman}</p>}
             {current.ja && <p className="mt-1 font-bold">{current.ja}</p>}
             {current.audioSource === "tts" && current.audioUrl && (
               <div className="mt-4 flex items-center gap-2 rounded-full bg-voice-soft py-1 pr-4 pl-1 text-sm font-bold text-voice">

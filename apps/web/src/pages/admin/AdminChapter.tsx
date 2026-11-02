@@ -27,15 +27,24 @@ function ItemRow({ item, index, onEdit }: { item: Item; index: number; onEdit: (
       <button type="button" onClick={onEdit} className="press flex min-w-0 flex-1 items-center gap-3 text-left">
         <span className="w-5 shrink-0 text-right text-xs font-bold text-muted tabular-nums">{index + 1}</span>
         <div className="min-w-0 flex-1">
-          <p lang="ne" className="truncate text-[19px] font-medium">
+          <p lang="ne" className="truncate text-[20px] leading-snug">
             {item.ne}
           </p>
-          <p className="flex items-center gap-1.5 truncate text-[13px] text-muted">
-            {item.register && <Badge tone="accent">{REGISTER_INFO[item.register].pronoun}</Badge>}
-            {item.audioSource === "tts" && <Badge tone="voice">TTS</Badge>}
-            <span className="truncate">
-              {[item.ja, item.roman].filter(Boolean).join(" · ") || <span className="italic">no translation</span>}
-            </span>
+          <p className="flex items-center gap-2 truncate text-[13px] text-muted">
+            {item.register && (
+              <Badge tone="voice">
+                <span lang="ne">{REGISTER_INFO[item.register].pronoun}</span>
+              </Badge>
+            )}
+            {item.audioSource === "tts" && <Badge tone="breath">TTS</Badge>}
+            {item.ja || item.roman ? (
+              <>
+                {item.ja && <span className="truncate text-ink/80">{item.ja}</span>}
+                {item.roman && <span className="roman truncate text-[14px]">{item.roman}</span>}
+              </>
+            ) : (
+              <span>No translation</span>
+            )}
           </p>
         </div>
       </button>
@@ -100,7 +109,7 @@ export function AdminChapter() {
   const editing = itemSheet?.item ? chapter.items.find((i) => i.id === itemSheet.item!.id) : undefined;
 
   return (
-    <>
+    <div className="mx-auto w-full max-w-3xl">
       <PageHeader
         back="/admin"
         title={chapter.titleJa}
@@ -157,7 +166,7 @@ export function AdminChapter() {
 
       {archived.length > 0 && (
         <details className="mt-8">
-          <summary className="cursor-pointer px-1 text-sm font-extrabold text-muted">
+          <summary className="cursor-pointer px-1 text-[15px] font-bold text-muted">
             Archived ({archived.length})
           </summary>
           <List className="mt-3">
@@ -172,13 +181,13 @@ export function AdminChapter() {
         type="button"
         aria-label="Add item"
         onClick={() => setItemSheet({})}
-        className="press fixed right-5 bottom-[calc(max(env(safe-area-inset-bottom),0.75rem)+5rem)] z-30 grid size-14 place-items-center rounded-full bg-accent text-accent-ink shadow-lift sm:right-[max(1.25rem,calc(50vw-20rem))]"
+        className="press fixed right-5 bottom-[calc(var(--nav-h)+env(safe-area-inset-bottom)+1.25rem)] z-30 grid size-14 place-items-center rounded-full bg-ink text-bg shadow-lift lg:right-8"
       >
         <Plus className="size-7" />
       </button>
 
       <ChapterSheet open={editingChapter} onClose={() => setEditingChapter(false)} chapter={chapter} />
       <ItemSheet open={itemSheet !== null} onClose={() => setItemSheet(null)} chapter={chapter} item={editing} />
-    </>
+    </div>
   );
 }

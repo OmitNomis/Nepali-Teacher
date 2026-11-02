@@ -122,7 +122,7 @@ export function AdminChapters() {
           </Button>
         </EmptyState>
       ) : (
-        <div className="flex flex-col gap-7">
+        <div className="grid gap-8 lg:grid-cols-2 lg:items-start">
           {TRACK_OPTIONS.map(({ value: track, label }) => {
             const list = chapters.filter((c) => c.track === (track as Track));
             if (!list.length) return null;

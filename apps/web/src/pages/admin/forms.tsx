@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Archive, ArchiveRestore, ArrowDown, ArrowUp, FileUp, MicOff } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import { chapterFile, type ItemKind, type Register, type Track } from "@nt/shared";
 import { REGISTER_INFO, REGISTER_ORDER } from "../../lib/registers";
 import { Button, Field, Segmented, Sheet, TextArea, TextInput, useToast } from "../../components/ui";
@@ -22,9 +22,9 @@ export function RecordingMeter({ itemCount, missing, tts }: { itemCount: number;
           <span className="font-bold text-ok">All {itemCount} recorded</span>
         ) : (
           <>
-            <span className="font-bold text-ink">{recorded}</span> / {itemCount} recorded
-            {tts > 0 && ` · ${tts} TTS`}
-            {missing > 0 && ` · ${missing} silent`}
+            <span className="font-bold text-ink">{recorded}</span> of {itemCount} recorded
+            {tts > 0 && `, ${tts} TTS`}
+            {missing > 0 && `, ${missing} silent`}
           </>
         )}
       </p>
@@ -152,9 +152,9 @@ const emptyItem = (kind: ItemKind, keep?: { register: Register | null; group: st
   group: keep?.group ?? "",
 });
 
-const REGISTER_OPTIONS: { value: Register | "none"; label: string }[] = [
+const REGISTER_OPTIONS: { value: Register | "none"; label: ReactNode }[] = [
   { value: "none", label: "—" },
-  ...REGISTER_ORDER.map((r) => ({ value: r, label: REGISTER_INFO[r].pronoun })),
+  ...REGISTER_ORDER.map((r) => ({ value: r, label: <span lang="ne">{REGISTER_INFO[r].pronoun}</span> })),
 ];
 
 /** Create (with "save & next" for fast entry) or edit an item. */
@@ -285,7 +285,7 @@ export function ItemSheet({
         </div>
         {form.kind !== "letter" && (
           <>
-            <Field label="Politeness" hint={form.register ? `${REGISTER_INFO[form.register].admin} · ${REGISTER_INFO[form.register].ja}` : "Neutral / not pronoun-specific"}>
+            <Field label="Politeness" hint={form.register ? `${REGISTER_INFO[form.register].admin} (${REGISTER_INFO[form.register].ja})` : "Neutral / not pronoun-specific"}>
               {() => (
                 <Segmented
                   value={form.register ?? "none"}
