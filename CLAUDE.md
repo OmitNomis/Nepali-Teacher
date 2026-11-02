@@ -47,6 +47,15 @@ content. See README.md for setup, deploy, and the chapter JSON format.
   voicing/aspiration and a Japanese tip per letter; `MouthDiagram` draws a
   cutaway from that data (no image assets). Tips compare to Japanese sounds
   and should be checked by the owner (e.g. च as ts, क्ष, ज्ञ).
+- Design: ink on mist, tokens in `apps/web/src/styles.css`. No Nepal flag /
+  Himalaya decoration (owner's call). The raspberry accent only means sound
+  (what plays or is playing, and the tongue in diagrams); gold is breath,
+  violet is voice; primary buttons are ink. Nepali is set in Tiro Devanagari
+  Hindi (romanization in its italic, `roman` utility), Japanese in the system
+  Hiragino. Signature: the karaoke wipe (`Karaoke` in `components/audio.tsx`)
+  fills Nepali text as its clip plays. The learner has no nav bar (avatar on
+  home opens the account); admins get a tab bar, or a sidebar on wide screens.
+  The app icon is generated from Tiro's अ outline, not drawn by hand.
 - SRS: cards are created on first answer (no card = new) and keyed by
   (user, item, type). `soundKey` in shared defines which letters count as the
   same sound; the owner (native speaker) may want to adjust it.
