@@ -7,6 +7,7 @@ import { EqBars, Karaoke } from "../../components/audio";
 import { PronunciationSheet } from "../../components/Pronunciation";
 import { EmptyState, List, PageHeader, PageLoader } from "../../components/ui";
 import type { Item } from "../../lib/api";
+import { useShowPronunciation } from "../../lib/features";
 import { rememberChapter } from "../../lib/lastChapter";
 import { play, playAll, stop, useNowPlaying, usePlayRun, useQueueActive } from "../../lib/player";
 import { useChapter } from "../../lib/queries";
@@ -219,6 +220,7 @@ export function ChapterView() {
   const run = usePlayRun();
   const nowPlaying = useNowPlaying();
   const [guide, setGuide] = useState<Item | null>(null);
+  const showPronunciation = useShowPronunciation();
 
   useEffect(() => () => stop(), []);
   useEffect(() => {
@@ -295,7 +297,7 @@ export function ChapterView() {
             <LetterTile
               key={item.id}
               item={item}
-              onInfo={pronunciation(item.ne) ? () => setGuide(item) : undefined}
+              onInfo={showPronunciation && pronunciation(item.ne) ? () => setGuide(item) : undefined}
             />
           ))}
         </div>

@@ -8,6 +8,7 @@ import { EqBars, Karaoke } from "../../components/audio";
 import { PronunciationGuide } from "../../components/Pronunciation";
 import { Button, PageLoader, useToast } from "../../components/ui";
 import { client, unwrap, type QuizItem, type SessionCard } from "../../lib/api";
+import { useShowPronunciation } from "../../lib/features";
 import { play, stop, useNowPlaying } from "../../lib/player";
 import { useReviewSession } from "../../lib/queries";
 
@@ -44,6 +45,7 @@ function SoundButton({ item, size = "md", className }: { item: QuizItem; size?: 
 }
 
 function Intro({ item, onDone }: { item: QuizItem; onDone: () => void }) {
+  const showPronunciation = useShowPronunciation();
   return (
     <div className="animate-pop flex flex-1 flex-col items-center text-center">
       <span className="inline-flex items-center gap-1 rounded-full bg-breath-soft px-3 py-1 text-[13px] font-bold text-breath">
@@ -58,9 +60,11 @@ function Intro({ item, onDone }: { item: QuizItem; onDone: () => void }) {
           <SoundButton item={item} />
         </div>
       </div>
-      <div className="mt-4 w-full text-left">
-        <PronunciationGuide letter={item.ne} compact />
-      </div>
+      {showPronunciation && (
+        <div className="mt-4 w-full text-left">
+          <PronunciationGuide letter={item.ne} compact />
+        </div>
+      )}
       <Button size="lg" className="mt-auto w-full shrink-0" onClick={onDone}>
         覚えた
       </Button>

@@ -47,6 +47,8 @@ content. See README.md for setup, deploy, and the chapter JSON format.
   voicing/aspiration and a Japanese tip per letter; `MouthDiagram` draws a
   cutaway from that data (no image assets). Tips compare to Japanese sounds
   and should be checked by the owner (e.g. च as ts, क्ष, ज्ञ).
+  Until they are, the learner doesn't see them: `PRONUNCIATION_FOR_LEARNERS`
+  in `apps/web/src/lib/features.ts` (admins still do, to review).
 - Design: ink on mist, tokens in `apps/web/src/styles.css`. No Nepal flag /
   Himalaya decoration (owner's call). The raspberry accent only means sound
   (what plays or is playing, and the tongue in diagrams); gold is breath,

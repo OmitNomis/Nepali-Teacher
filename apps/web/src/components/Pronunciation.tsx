@@ -13,7 +13,8 @@ import {
 import { play, useNowPlaying } from "../lib/player";
 import { EqBars, Karaoke, PlayButton } from "./audio";
 import { MouthDiagram } from "./MouthDiagram";
-import { Sheet } from "./ui";
+import { PRONUNCIATION_FOR_LEARNERS } from "../lib/features";
+import { Badge, Sheet } from "./ui";
 
 const PLACE: Record<Place, string> = {
   lips: "唇を閉じる",
@@ -210,7 +211,17 @@ export function PronunciationSheet({
   onClose: () => void;
 }) {
   return (
-    <Sheet open={!!item} onClose={onClose} title="発音のしかた">
+    <Sheet
+      open={!!item}
+      onClose={onClose}
+      title={
+        <span className="flex items-center gap-2">
+          発音のしかた
+          {/* only admins get here while the guides are being checked */}
+          {!PRONUNCIATION_FOR_LEARNERS && <Badge tone="breath">Hidden from learner</Badge>}
+        </span>
+      }
+    >
       {item && (
         <div className="flex flex-col gap-4">
           <div className="flex items-center justify-center gap-4">
