@@ -10,7 +10,7 @@
   --surface: #ffffff;
   --surface-2: #eceef5;
   --ink: #1c2145;
-  --muted: #6b7090;
+  --muted: #646a88;
   --line: #e0e3ee;
   /* the one deep panel per screen (today's review), and what sits on it */
   --deep: #1c2145;
@@ -18,13 +18,13 @@
   --accent: #d6336c;
   --accent-ink: #ffffff;
   --accent-soft: #fce8ef;
-  --voice: #5160d8;
+  --voice: #4a57cc;
   --voice-soft: #e9ebfc;
-  --breath: #a86400;
+  --breath: #955800;
   --breath-soft: #fdf1dc;
   --ok: #157a4c;
   --ok-soft: #dff3e8;
-  --miss: #b9550b;
+  --miss: #a24a08;
   --miss-soft: #fcebdc;
   --shadow: 0 1px 1px rgb(28 33 69 / 0.04), 0 2px 8px -4px rgb(28 33 69 / 0.1);
   --shadow-lift: 0 1px 2px rgb(28 33 69 / 0.06), 0 16px 36px -18px rgb(28 33 69 / 0.35);

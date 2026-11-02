@@ -29,7 +29,6 @@ function SoundButton({ item, size = "md", className }: { item: QuizItem; size?: 
       className={clsx(
         "press grid shrink-0 place-items-center rounded-full transition-colors",
         size === "xl" ? "size-32 bg-accent text-accent-ink shadow-lift" : "size-11 bg-accent-soft text-accent",
-        size === "xl" && playing && "animate-ring",
         className,
       )}
     >
