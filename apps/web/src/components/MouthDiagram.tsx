@@ -80,7 +80,7 @@ function vowelTongue({ height, back }: VowelShape): Pt[] {
       : back === "back"
         ? [[46, 85], [58, 79], [82, 70], [110, 56], [134, 48], [150, 90]]
         : [[46, 84], [56, 76], [80, 68], [108, 64], [136, 68], [150, 96]];
-  const drop = height === "mid" && back !== "central" ? 6 : 0;
+  const drop = height === "open-mid" ? 13 : height === "mid" && back !== "central" ? 6 : 0;
   return high.map(([x, y], i) => [x, i === high.length - 1 ? y : y + drop]);
 }
 
@@ -119,7 +119,7 @@ function poseFor(sound: Sound): Pose {
     return {
       tongue: vowelTongue(sound.shape),
       ghost: sound.to && vowelTongue(sound.to),
-      jaw: height === "low" ? 9 : height === "mid" ? (back === "central" ? 5 : 4) : 1,
+      jaw: height === "low" ? 9 : height === "open-mid" ? 6 : height === "mid" ? (back === "central" ? 5 : 4) : 1,
       round,
       nasal: !!sound.nasal,
       voiced: true,

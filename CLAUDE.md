@@ -45,8 +45,11 @@ content. See README.md for setup, deploy, and the chapter JSON format.
   `audio.source = "tts"`, with `audio.voice` = the voice that actually spoke it.
 - Pronunciation: `packages/shared/src/articulation.ts` holds place/manner/
   voicing/aspiration and a Japanese tip per letter; `MouthDiagram` draws a
-  cutaway from that data (no image assets). Tips compare to Japanese sounds
-  and should be checked by the owner (e.g. च as ts, क्ष, ज्ञ).
+  cutaway from that data (no image assets). Tips compare to Japanese sounds.
+  Revised 2026-10-27 to Nepali (not Hindi) values: अ is open-mid back [ʌ],
+  retroflexes are lightly curled (tip just behind the ridge), conjuncts are
+  drawn as said (क्ष = क्छ, ज्ञ = ग्य), ऋ = रि. Still for the owner to
+  confirm: ञ said on its own, and च's "ツァ/チャ" tip.
   Until they are, the learner doesn't see them: `PRONUNCIATION_FOR_LEARNERS`
   in `apps/web/src/lib/features.ts` (admins still do, to review).
 - Design: ink on mist, tokens in `apps/web/src/styles.css`. No Nepal flag /

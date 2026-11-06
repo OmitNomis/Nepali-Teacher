@@ -24,8 +24,21 @@ describe("pronunciation", () => {
     expect(pronunciation("कं")!.steps.map((s) => s.letter)).toEqual(["क", "अं"]);
   });
 
-  it("splits conjuncts into their consonants", () => {
-    expect(pronunciation("क्ष")!.steps.map((s) => s.letter)).toEqual(["क", "ष", "अ"]);
+  it("splits conjuncts into the consonants actually said", () => {
+    expect(pronunciation("क्ष")!.steps.map((s) => s.letter)).toEqual(["क", "छ", "अ"]);
+    expect(pronunciation("ज्ञ")!.steps.map((s) => s.letter)).toEqual(["ग", "य", "अ"]);
+    expect(pronunciation("त्र")!.steps.map((s) => s.letter)).toEqual(["त", "र", "अ"]);
+  });
+
+  it("reads ऋ as ri, alone and as a vowel sign", () => {
+    expect(pronunciation("ऋ")!.steps.map((s) => s.letter)).toEqual(["र", "इ"]);
+    expect(pronunciation("कृ")!.steps.map((s) => s.letter)).toEqual(["क", "र", "इ"]);
+  });
+
+  it("uses the Nepali अ: back and unrounded, unlike ओ", () => {
+    const shape = (ne: string) => (pronunciation(ne)!.steps[0]!.sound as { shape: object }).shape;
+    expect(shape("अ")).toEqual({ height: "open-mid", back: "back", round: false });
+    expect(shape("ओ")).toEqual({ height: "mid", back: "back", round: true });
   });
 
   it("marks aspiration and voicing the way Japanese speakers need to hear it", () => {
