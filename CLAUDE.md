@@ -32,7 +32,7 @@ content. See README.md for setup, deploy, and the chapter JSON format.
   compiled on the box. Ship only `dist/`, `drizzle/`, `web/`; keep its
   `node_modules`. Accounts: `nepali-user <name> <admin|learner> [display]`;
   content: `nepali-import <file.json>...`; redo off-voice TTS:
-  `nepali-tts-regenerate [--dry-run]`. Before a deploy with migrations, snapshot
+  `nepali-tts-regenerate [--all] [--dry-run]`. Before a deploy with migrations, snapshot
   the db into `/var/lib/nepali-teacher/backups/`.
   Data in `/var/lib/nepali-teacher`. The Docker + Caddy VPS setup in the
   README still works as an alternative. Off-server backups are still TODO.
@@ -62,10 +62,15 @@ content. See README.md for setup, deploy, and the chapter JSON format.
   (user, item, type). `soundKey` in shared defines which letters count as the
   same sound; the owner (native speaker) may want to adjust it.
 
-## TTS status (as of 2026-10-22)
-- `edge` (keyless default): works again since msedge-tts 2.1.0 (the 403s from
-  2026-10-10, rany2/edge-tts#490, were fixed 2026-10-13). Natural neural voices.
-  Failures fall back to `google` automatically.
+## TTS status (as of 2026-10-27)
+- `edge` (keyless default): broke again by 2026-10-27 (msedge-tts 2.1.0 got
+  "Unexpected server response: 200"; Microsoft moved the endpoint and changed
+  Sec-MS-GEC). msedge-tts 2.1.1 (2026-10-25) fixes it. Earlier: 403s from
+  2026-10-10 (rany2/edge-tts#490), fixed in 2.1.0. Natural neural voices.
+  Failures fall back to `google` automatically, so an outage shows up as Google
+  voices in the recording queue, not as errors.
+- TTS clips are trimmed and leveled like recordings. Placeholders made before
+  that keep Edge's padding until `nepali-tts-regenerate --all` redoes them.
 - `google`: works, but sentences sound unnatural.
 - `azure` (F0 free tier, hard-capped): same voices as Edge, needs a key.
 - Piper offline Nepali voices remain an untested backup option.

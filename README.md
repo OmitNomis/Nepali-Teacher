@@ -83,13 +83,16 @@ Voices (`TTS_VOICE`): `ne-NP-HemkalaNeural` (female, default) or
 
 New and imported items are queued for TTS automatically. Editing the Nepali text
 of an item that only has TTS regenerates it. A human recording always replaces
-TTS and is never overwritten by it.
+TTS and is never overwritten by it. TTS clips go through the same silence trim
+and loudness leveling as recordings (Edge pads each clip with a second or more
+of silence).
 
 Edge requests are spaced out and rate-limited ones (429) are retried before
 falling back to Google. Each clip records the voice that actually spoke it, so
-`pnpm --filter @nt/server exec tsx src/cli/regenerate-tts.ts [--dry-run]`
+`pnpm --filter @nt/server exec tsx src/cli/regenerate-tts.ts [--all] [--dry-run]`
 (`nepali-tts-regenerate` on the server) redoes placeholders that aren't in the
-configured voice, e.g. after a fallback or a voice change.
+configured voice, e.g. after a fallback or a voice change. `--all` redoes every
+placeholder, e.g. ones made before TTS clips were trimmed.
 
 ## Chapter JSON (for bulk edits or LLM-written chapters)
 

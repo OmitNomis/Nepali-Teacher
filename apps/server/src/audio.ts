@@ -97,6 +97,8 @@ const FILTER = `${SILENCE},areverse,${SILENCE},areverse,loudnorm=I=-16:TP=-1.5:L
 /**
  * Job: produce a trimmed AAC copy as a new immutable audio row and point the
  * item at it. Audio URLs never change content, so clients can cache forever.
+ * Runs for recordings and TTS alike (Edge pads its clips with a second or
+ * more of silence, which would throw off the karaoke wipe and play-all).
  */
 export function trimJob(db: Db, config: Config) {
   return async (payload: unknown) => {
@@ -117,8 +119,18 @@ export function trimJob(db: Db, config: Config) {
     const swapped = db.transaction((tx) => {
       const stillUsed = tx.select().from(items).where(eq(items.audioId, audioId)).all();
       if (stillUsed.length === 0) return false;
+      // a trimmed TTS placeholder is still a placeholder, in the same voice
       tx.insert(audio)
-        .values({ id, file: name, mime: "audio/mp4", bytes, trimmed: true, createdBy: source.createdBy })
+        .values({
+          id,
+          file: name,
+          mime: "audio/mp4",
+          bytes,
+          trimmed: true,
+          source: source.source,
+          voice: source.voice,
+          createdBy: source.createdBy,
+        })
         .run();
       tx.update(items).set({ audioId: id }).where(eq(items.audioId, audioId)).run();
       return true;

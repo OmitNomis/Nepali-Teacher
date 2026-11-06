@@ -6,7 +6,8 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { loadConfig, type Config } from "../src/config";
 import { createChapter, createItem, getItem, listMissingAudio } from "../src/content";
 import { openDb, type Db } from "../src/db";
-import { items, jobs, users } from "../src/db/schema";
+import { trimJob, TRIM_JOB } from "../src/audio";
+import { audio, items, jobs, users } from "../src/db/schema";
 import {
   queueTts,
   rateLimited,
@@ -49,6 +50,25 @@ describe("ttsJob", () => {
     const item = getItem(db, a.id);
     expect(item.audioSource).toBe("tts");
     expect(item.audioUrl).not.toBeNull();
+    expect(listMissingAudio(db).map((i) => i.id)).toContain(a.id);
+    // Edge pads clips with silence: they get trimmed like recordings
+    const trims = db.select().from(jobs).where(eq(jobs.type, TRIM_JOB)).all();
+    expect(trims.map((j) => j.payload)).toEqual([{ audioId: item.audioId }]);
+  });
+
+  it("stays a placeholder in the same voice once trimmed", async () => {
+    // stand-in for ffmpeg: copies the input (-i <file>) to the output (last argument)
+    const fakeFfmpeg = path.join(config.dataDir, "ffmpeg");
+    fs.writeFileSync(fakeFfmpeg, '#!/bin/sh\nfor out; do :; done\ncp "$4" "$out"\n', { mode: 0o755 });
+    const a = add("नमस्ते");
+    await ttsJob(db, config, async (text) => ({ audio: Buffer.from(text), voice: "ne-NP-HemkalaNeural" }))({ itemId: a.id });
+    const untrimmed = getItem(db, a.id).audioId!;
+    await trimJob(db, { ...config, ffmpeg: fakeFfmpeg })({ audioId: untrimmed });
+
+    const item = getItem(db, a.id);
+    expect(item.audioId).not.toBe(untrimmed);
+    const row = db.select().from(audio).where(eq(audio.id, item.audioId!)).get()!;
+    expect(row).toMatchObject({ source: "tts", voice: "ne-NP-HemkalaNeural", trimmed: true, mime: "audio/mp4" });
     expect(listMissingAudio(db).map((i) => i.id)).toContain(a.id);
   });
 
@@ -175,5 +195,8 @@ describe("requeueOtherVoices", () => {
     expect(getItem(db, google.id).audioUrl).toBeNull();
     expect(getItem(db, edge.id).audioSource).toBe("tts");
     expect(getItem(db, recorded.id).audioSource).toBe("recording");
+
+    // --all redoes every placeholder, still never a recording
+    expect(requeueOtherVoices(db, config, "ne-NP-HemkalaNeural", { all: true, dryRun: true }).stale.map((s) => s.ne)).toEqual(["ख"]);
   });
 });

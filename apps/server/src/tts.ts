@@ -6,6 +6,7 @@ import type { Config } from "./config";
 import type { Db } from "./db";
 import { audio, items, jobs } from "./db/schema";
 import { newId } from "./ids";
+import { TRIM_JOB } from "./audio";
 import { enqueue } from "./jobs";
 
 export const TTS_JOB = "audio.tts";
@@ -182,16 +183,23 @@ export function queueTts(db: Db, itemIds: string[]) {
 
 /**
  * Drops TTS placeholders spoken in any voice other than `voice` (e.g. Google
- * fallbacks after an Edge outage, or after switching voices) and queues them
+ * fallbacks after an Edge outage, or after switching voices), or with `all`
+ * every placeholder (e.g. ones made before TTS got trimmed), and queues them
  * again. Human recordings are never touched; review cards hang off the item,
  * not the audio, so learning progress is kept.
  */
-export function requeueOtherVoices(db: Db, config: Config, voice: string, { dryRun = false } = {}) {
+export function requeueOtherVoices(db: Db, config: Config, voice: string, { dryRun = false, all = false } = {}) {
   const stale = db
     .select({ itemId: items.id, ne: items.ne, audioId: audio.id, file: audio.file, voice: audio.voice })
     .from(items)
     .innerJoin(audio, eq(items.audioId, audio.id))
-    .where(and(eq(audio.source, "tts"), eq(items.archived, false), or(isNull(audio.voice), ne(audio.voice, voice))))
+    .where(
+      and(
+        eq(audio.source, "tts"),
+        eq(items.archived, false),
+        all ? undefined : or(isNull(audio.voice), ne(audio.voice, voice)),
+      ),
+    )
     .all();
   if (dryRun) return { stale, queued: 0 };
   for (const s of stale) {
@@ -224,10 +232,10 @@ export function ttsJob(db: Db, config: Config, provider: TtsProvider) {
       const fresh = tx.select().from(items).where(eq(items.id, itemId)).get();
       if (!fresh || fresh.audioId || fresh.archived) return "discard";
       if (fresh.ne !== text) return "retry";
-      tx.insert(audio)
-        .values({ id, file: name, mime: "audio/mpeg", bytes: buf.length, trimmed: true, source: "tts", voice })
-        .run();
+      tx.insert(audio).values({ id, file: name, mime: "audio/mpeg", bytes: buf.length, source: "tts", voice }).run();
       tx.update(items).set({ audioId: id }).where(eq(items.id, itemId)).run();
+      // playable right away; the trimmed, level-matched copy replaces it shortly
+      enqueue(tx, TRIM_JOB, { audioId: id });
       return "saved";
     });
     if (outcome !== "saved") fs.rm(path.join(config.audioDir, name), { force: true }, () => {});
