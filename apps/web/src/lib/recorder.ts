@@ -10,10 +10,37 @@ function pickMimeType() {
   return "";
 }
 
-/**
- * Mic recorder. The mic stream is kept open while the component is mounted so
- * recording many clips in a row doesn't re-prompt for permission on iOS.
+/*
+ * One mic for the whole app. It stays open while any recorder is mounted, so
+ * recording many clips in a row doesn't re-prompt for permission on iOS, but
+ * every record button (one per row on a chapter page) shares it instead of
+ * opening its own stream and AudioContext. Closed when the last one unmounts.
  */
+type Mic = { stream: MediaStream; ctx: AudioContext; analyser: AnalyserNode };
+let mic: Mic | null = null;
+let micUsers = 0;
+
+function closeMic() {
+  mic?.stream.getTracks().forEach((t) => t.stop());
+  void mic?.ctx.close();
+  mic = null;
+}
+
+async function openMic() {
+  if (mic?.stream.active) return mic;
+  closeMic();
+  const stream = await navigator.mediaDevices.getUserMedia({
+    audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
+  });
+  const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+  const ctx = new Ctx();
+  const analyser = ctx.createAnalyser();
+  analyser.fftSize = 1024;
+  ctx.createMediaStreamSource(stream).connect(analyser);
+  mic = { stream, ctx, analyser };
+  return mic;
+}
+
 export function useRecorder() {
   const [state, setState] = useState<RecorderState>("idle");
   const [blob, setBlob] = useState<Blob | null>(null);
@@ -21,10 +48,7 @@ export function useRecorder() {
   const [elapsed, setElapsed] = useState(0);
   const [level, setLevel] = useState(0);
 
-  const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
-  const ctxRef = useRef<AudioContext | null>(null);
-  const analyserRef = useRef<AnalyserNode | null>(null);
   const rafRef = useRef(0);
   const startedAt = useRef(0);
 
@@ -33,9 +57,7 @@ export function useRecorder() {
     setLevel(0);
   };
 
-  const startMeter = () => {
-    const analyser = analyserRef.current;
-    if (!analyser) return;
+  const startMeter = (analyser: AnalyserNode) => {
     const data = new Uint8Array(analyser.fftSize);
     const loop = () => {
       analyser.getByteTimeDomainData(data);
@@ -48,29 +70,13 @@ export function useRecorder() {
     loop();
   };
 
-  const ensureStream = async () => {
-    if (streamRef.current?.active) return streamRef.current;
-    const stream = await navigator.mediaDevices.getUserMedia({
-      audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true },
-    });
-    streamRef.current = stream;
-    const Ctx = window.AudioContext ?? (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
-    const ctx = new Ctx();
-    const analyser = ctx.createAnalyser();
-    analyser.fftSize = 1024;
-    ctx.createMediaStreamSource(stream).connect(analyser);
-    ctxRef.current = ctx;
-    analyserRef.current = analyser;
-    return stream;
-  };
-
   const start = useCallback(async () => {
     setError(null);
     setBlob(null);
     setState("starting");
     try {
-      const stream = await ensureStream();
-      await ctxRef.current?.resume();
+      const { stream, ctx, analyser } = await openMic();
+      await ctx.resume();
       const mimeType = pickMimeType();
       const rec = new MediaRecorder(stream, mimeType ? { mimeType } : undefined);
       const chunks: Blob[] = [];
@@ -86,7 +92,7 @@ export function useRecorder() {
       startedAt.current = Date.now();
       setElapsed(0);
       setState("recording");
-      startMeter();
+      startMeter(analyser);
     } catch (e) {
       stopMeter();
       setError(
@@ -108,15 +114,14 @@ export function useRecorder() {
     setState("idle");
   }, []);
 
-  useEffect(
-    () => () => {
+  useEffect(() => {
+    micUsers++;
+    return () => {
       cancelAnimationFrame(rafRef.current);
       if (recorderRef.current?.state === "recording") recorderRef.current.stop();
-      streamRef.current?.getTracks().forEach((t) => t.stop());
-      void ctxRef.current?.close();
-    },
-    [],
-  );
+      if (--micUsers === 0) closeMic();
+    };
+  }, []);
 
   return { state, blob, error, elapsed, level, start, stop, reset };
 }
