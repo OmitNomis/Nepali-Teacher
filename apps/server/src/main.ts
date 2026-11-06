@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import { serve } from "@hono/node-server";
 import { createApp } from "./app";
-import { TRIM_JOB, trimJob } from "./audio";
+import { REMOVE_JOB, removeJob, TRIM_JOB, trimJob } from "./audio";
 import { pruneSessions } from "./auth";
 import { loadConfig } from "./config";
 import { openDb } from "./db";
@@ -15,6 +15,7 @@ const db = openDb(config.dbFile, config.migrationsDir);
 const tts = providerFromConfig(config);
 startJobRunner(db, {
   [TRIM_JOB]: trimJob(db, config),
+  [REMOVE_JOB]: removeJob(db, config),
   ...(tts && { [TTS_JOB]: ttsJob(db, config, tts) }),
 });
 console.log(tts ? `TTS: ${config.tts.provider} (${config.tts.voice})` : "TTS: off");

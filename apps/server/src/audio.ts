@@ -11,6 +11,9 @@ import { enqueue, PermanentJobError } from "./jobs";
 
 export const MAX_AUDIO_BYTES = 10 * 1024 * 1024;
 export const TRIM_JOB = "audio.trim";
+export const REMOVE_JOB = "audio.remove";
+// how long replaced audio stays playable for screens still holding its URL
+const KEEP_REPLACED_MS = 60 * 60 * 1000;
 
 const EXT_BY_MIME: Record<string, string> = {
   "audio/mp4": "m4a",
@@ -36,6 +39,24 @@ function removeAudio(db: Db, config: Config, audioId: string) {
   fs.rm(path.join(config.audioDir, row.file), { force: true }, () => {});
 }
 
+/**
+ * Deletes replaced audio later instead of now. A screen that loaded the item
+ * just before a re-record or a trim swap still holds the old URL; deleting at
+ * once made that tap fail silently (e.g. listening back to a fresh take).
+ */
+function retireAudio(db: Pick<Db, "insert">, audioId: string) {
+  enqueue(db, REMOVE_JOB, { audioId }, new Date(Date.now() + KEEP_REPLACED_MS));
+}
+
+/** Job: delete retired audio, unless an item uses it again. */
+export function removeJob(db: Db, config: Config) {
+  return async (payload: unknown) => {
+    const { audioId } = payload as { audioId: string };
+    if (db.select({ id: items.id }).from(items).where(eq(items.audioId, audioId)).get()) return;
+    removeAudio(db, config, audioId);
+  };
+}
+
 /** Stores a new recording for an item, replacing any previous one. */
 export async function saveItemAudio(
   db: Db,
@@ -57,8 +78,8 @@ export async function saveItemAudio(
     tx.insert(audio).values({ id, file: name, mime, bytes: file.size, createdBy: userId }).run();
     tx.update(items).set({ audioId: id }).where(eq(items.id, itemId)).run();
     enqueue(tx, TRIM_JOB, { audioId: id });
+    if (item.audioId) retireAudio(tx, item.audioId);
   });
-  if (item.audioId) removeAudio(db, config, item.audioId);
   return id;
 }
 
@@ -133,9 +154,9 @@ export function trimJob(db: Db, config: Config) {
         })
         .run();
       tx.update(items).set({ audioId: id }).where(eq(items.audioId, audioId)).run();
+      retireAudio(tx, audioId);
       return true;
     });
-    if (swapped) removeAudio(db, config, audioId);
-    else fs.rm(out, { force: true }, () => {});
+    if (!swapped) fs.rm(out, { force: true }, () => {});
   };
 }

@@ -9,8 +9,8 @@ export class PermanentJobError extends Error {}
 
 const MAX_ATTEMPTS = 3;
 
-export function enqueue(db: Pick<Db, "insert">, type: string, payload: unknown) {
-  db.insert(jobs).values({ type, payload }).run();
+export function enqueue(db: Pick<Db, "insert">, type: string, payload: unknown, runAt?: Date) {
+  db.insert(jobs).values({ type, payload, runAt }).run();
 }
 
 /**
