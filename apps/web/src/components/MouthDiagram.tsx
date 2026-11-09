@@ -78,7 +78,9 @@ function vowelTongue({ height, back }: VowelShape): Pt[] {
     back === "front"
       ? [[45, 82], [54, 70], [76, 53], [102, 50], [132, 60], [150, 94]]
       : back === "back"
-        ? [[46, 85], [58, 79], [82, 70], [110, 56], [134, 48], [150, 90]]
+        ? // a bunched hump under the soft palate that still leaves the air a
+          // channel (touching it would read as क, not उ)
+          [[46, 86], [58, 82], [80, 72], [104, 59], [126, 53], [145, 62], [150, 90]]
         : [[46, 84], [56, 76], [80, 68], [108, 64], [136, 68], [150, 96]];
   const drop = height === "open-mid" ? 13 : height === "mid" && back !== "central" ? 6 : 0;
   return high.map(([x, y], i) => [x, i === high.length - 1 ? y : y + drop]);
@@ -153,7 +155,8 @@ function oralAirPath(tongue: Pt[]) {
 export function MouthDiagram({ sound, className }: { sound: Sound; className?: string }) {
   const id = useId().replace(/:/g, "");
   const pose = poseFor(sound);
-  const r = pose.round ? 4 : 0;
+  // rounded lips push forward (उ, ओ, औ's end, व)
+  const r = pose.round ? 7 : 0;
   const under = floor(pose.jaw);
   const tongue = smooth([...pose.tongue, ...under], { closed: true });
   // the tongue grows out of the floor of the mouth: outline only what's visible
