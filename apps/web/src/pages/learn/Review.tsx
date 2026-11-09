@@ -446,7 +446,16 @@ export function Review() {
           }
         />
       ) : card && intro ? (
-        <Intro key={`intro-${pos}`} item={card.prompt} onDone={() => setIntroduced((s) => new Set(s).add(card.itemId))} />
+        <Intro
+          key={`intro-${pos}`}
+          item={card.prompt}
+          onDone={() => {
+            // the letter may still be sounding: on a "pick the sound" question
+            // that would show its option as playing and give the answer away
+            stop();
+            setIntroduced((s) => new Set(s).add(card.itemId));
+          }}
+        />
       ) : card ? (
         <div key={pos} className="animate-pop flex flex-1 flex-col">
           {card.type === "listen" ? (
