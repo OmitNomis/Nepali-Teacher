@@ -17,10 +17,10 @@ import { PRONUNCIATION_FOR_LEARNERS } from "../lib/features";
 import { Badge, Sheet } from "./ui";
 
 const PLACE: Record<Place, string> = {
-  lips: "唇を閉じる",
+  lips: "上下の唇で",
   teeth: "舌先を上の前歯の裏に",
   ridge: "舌先を歯ぐきに",
-  retroflex: "舌先を巻いて上あごに",
+  retroflex: "舌先を少し反らせて、歯ぐきの後ろに",
   palate: "舌の真ん中を上あごに",
   velum: "舌の奥を上あごの奥に",
   glottis: "のどの奥から",
@@ -59,7 +59,9 @@ function ConsonantChips({ sound }: { sound: ConsonantSound }) {
     <>
       <Chip tone="accent">{PLACE[sound.place]}</Chip>
       <Chip tone="muted">{MANNER[sound.manner]}</Chip>
-      {sound.aspirated ? <Chip tone="breath">息を強く出す</Chip> : <Chip tone="muted">息は出さない</Chip>}
+      {/* breath only tells stops apart (क / ख); for स or ह "no breath" would be wrong */}
+      {(sound.manner === "stop" || sound.manner === "affricate") &&
+        (sound.aspirated ? <Chip tone="breath">息を強く出す</Chip> : <Chip tone="muted">息は出さない</Chip>)}
       {sound.voiced ? <Chip tone="voice">声あり（のどが震える）</Chip> : <Chip tone="muted">声なし</Chip>}
     </>
   );
@@ -70,10 +72,17 @@ function VowelChips({ sound }: { sound: VowelSound }) {
   return (
     <>
       <Chip tone="accent">
-        {height === "high" ? "口は狭く" : height === "mid" ? "口は中くらい" : "口を大きく開ける"}
+        {height === "high"
+          ? "口は狭く"
+          : height === "mid"
+            ? "口は中くらい"
+            : height === "open-mid"
+              ? "口はやや広め"
+              : "口を大きく開ける"}
       </Chip>
       <Chip tone="muted">{back === "front" ? "舌は前" : back === "back" ? "舌は奥" : "舌は真ん中"}</Chip>
       {round && <Chip tone="muted">唇を丸める</Chip>}
+      {back === "back" && !round && <Chip tone="muted">唇は丸めない</Chip>}
       {sound.nasal && <Chip tone="breath">鼻に響かせる</Chip>}
       {sound.breath && <Chip tone="breath">最後に息を吐く</Chip>}
     </>
