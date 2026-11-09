@@ -50,8 +50,8 @@ content. See README.md for setup, deploy, and the chapter JSON format.
   retroflexes are lightly curled (tip just behind the ridge), conjuncts are
   drawn as said (क्ष = क्छ, ज्ञ = ग्य), ऋ = रि. Still for the owner to
   confirm: ञ said on its own, and च's "ツァ/チャ" tip.
-  Until they are, the learner doesn't see them: `PRONUNCIATION_FOR_LEARNERS`
-  in `apps/web/src/lib/features.ts` (admins still do, to review).
+  Shown to the learner since 2026-10-27; `PRONUNCIATION_FOR_LEARNERS` in
+  `apps/web/src/lib/features.ts` hides them again (admins still see them).
 - Design: ink on mist, tokens in `apps/web/src/styles.css`. No Nepal flag /
   Himalaya decoration (owner's call). The raspberry accent only means sound
   (what plays or is playing, and the tongue in diagrams); gold is breath,

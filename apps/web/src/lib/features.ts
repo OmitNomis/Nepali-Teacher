@@ -1,11 +1,12 @@
 import { useMe } from "./queries";
 
 /**
- * The mouth diagrams and tips (packages/shared/src/articulation.ts) stay hidden
- * from the learner until the owner has checked every letter; admins still see
- * them, to review. Flip this once they're all right.
+ * Whether the learner sees the mouth diagrams and tips
+ * (packages/shared/src/articulation.ts). Admins always do; while this is off
+ * their sheet is tagged "Hidden from learner". Turn it off again to hide the
+ * guides while reworking them.
  */
-export const PRONUNCIATION_FOR_LEARNERS = false;
+export const PRONUNCIATION_FOR_LEARNERS = true;
 
 export function useShowPronunciation() {
   const { data: me } = useMe();
