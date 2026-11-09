@@ -30,6 +30,11 @@ describe("pronunciation", () => {
     expect(pronunciation("त्र")!.steps.map((s) => s.letter)).toEqual(["त", "र", "अ"]);
   });
 
+  it("reads a vowel sign on a conjunct", () => {
+    expect(pronunciation("क्षा")!.steps.map((s) => s.letter)).toEqual(["क", "छ", "आ"]);
+    expect(pronunciation("ज्ञो")!.steps.map((s) => s.letter)).toEqual(["ग", "य", "ओ"]);
+  });
+
   it("reads ऋ as ri, alone and as a vowel sign", () => {
     expect(pronunciation("ऋ")!.steps.map((s) => s.letter)).toEqual(["र", "इ"]);
     expect(pronunciation("कृ")!.steps.map((s) => s.letter)).toEqual(["क", "र", "इ"]);

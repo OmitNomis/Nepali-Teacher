@@ -172,19 +172,23 @@ export function pronunciation(text: string): Pronunciation | null {
   if (vowel) return { steps: vowelSteps(ne)!, tip: vowel.tip };
 
   for (const [cluster, { parts, tip }] of Object.entries(CONJUNCTS)) {
-    if (ne === cluster) {
-      return {
-        steps: [...parts.map((p) => ({ letter: p, sound: CONSONANTS[p]! })), { letter: "अ", sound: VOWELS["अ"]! }],
-        tip,
-      };
+    if (ne.startsWith(cluster)) {
+      const following = vowelAfter([...ne.slice(cluster.length)]);
+      if (!following) return null;
+      return { steps: [...parts.map((p) => ({ letter: p, sound: CONSONANTS[p]! })), ...following], tip };
     }
   }
 
   const [first, ...rest] = [...ne];
   const consonant = first && CONSONANTS[first];
   if (!consonant) return null;
-  const vowelLetter = rest.length === 0 ? "अ" : rest.length === 1 ? MATRAS[rest[0]!] : undefined;
-  const following = vowelLetter && vowelSteps(vowelLetter);
+  const following = vowelAfter(rest);
   if (!following) return null;
   return { steps: [{ letter: first, sound: consonant }, ...following], tip: consonant.tip };
+}
+
+/** The vowel after a consonant: its sign, or the inherent अ when there's none. */
+function vowelAfter(signs: string[]) {
+  const vowelLetter = signs.length === 0 ? "अ" : signs.length === 1 ? MATRAS[signs[0]!] : undefined;
+  return vowelLetter ? vowelSteps(vowelLetter) : null;
 }
