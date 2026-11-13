@@ -1,8 +1,8 @@
 import clsx from "clsx";
-import { Headphones, Info, Pause, Play, Square, Volume2, X, Zap } from "lucide-react";
-import { useEffect, useState } from "react";
+import { Hand, Headphones, Info, Pause, Play, Square, Volume2, X, Zap } from "lucide-react";
+import { createContext, Fragment, useContext, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
-import { pronunciation } from "@nt/shared";
+import { pronunciation, soundKey, splitLetters } from "@nt/shared";
 import { EqBars, Karaoke } from "../../components/audio";
 import { PronunciationSheet } from "../../components/Pronunciation";
 import { EmptyState, List, PageHeader, PageLoader } from "../../components/ui";
@@ -10,7 +10,7 @@ import type { Item } from "../../lib/api";
 import { useShowPronunciation } from "../../lib/features";
 import { rememberChapter } from "../../lib/lastChapter";
 import { play, playAll, stop, useNowPlaying, usePlayRun, useQueueActive } from "../../lib/player";
-import { useChapter } from "../../lib/queries";
+import { useChapter, useLetterSounds } from "../../lib/queries";
 import { REGISTER_INFO, REGISTER_ORDER } from "../../lib/registers";
 
 const usePlaying = (url: string | null) => useNowPlaying() === url && url !== null;
@@ -118,9 +118,16 @@ function LetterRow({ items, infoFor }: { items: Item[]; infoFor: (item: Item) =>
   );
 }
 
-function SoundIcon({ playing, hasAudio }: { playing: boolean; hasAudio: boolean }) {
+function SoundIcon({ playing, hasAudio, onClick }: { playing: boolean; hasAudio: boolean; onClick: () => void }) {
   return (
-    <span
+    <button
+      type="button"
+      aria-label={playing ? "停止" : "聞く"}
+      disabled={!hasAudio}
+      onClick={(e) => {
+        e.stopPropagation();
+        onClick();
+      }}
       className={clsx(
         "grid size-10 shrink-0 place-items-center rounded-full transition-colors",
         playing ? "bg-accent text-accent-ink" : "bg-accent-soft text-accent",
@@ -128,30 +135,74 @@ function SoundIcon({ playing, hasAudio }: { playing: boolean; hasAudio: boolean 
       )}
     >
       {playing ? <Pause className="size-[18px]" fill="currentColor" /> : <Volume2 className="size-[18px]" />}
+    </button>
+  );
+}
+
+// clip URL per letter, keyed by soundKey; empty until loaded
+const NO_SOUNDS = new Map<string, string>();
+const LetterSounds = createContext(NO_SOUNDS);
+
+/** One letter of a phrase: tap to hear just that letter. */
+function LetterSound({ text, url }: { text: string; url: string }) {
+  const playing = usePlaying(url);
+  const hear = (e: { stopPropagation: () => void }) => {
+    e.stopPropagation();
+    toggle(url, playing);
+  };
+  return (
+    // inline, so the word still joins up and wraps as one; the vertical
+    // padding makes a taller target without moving the text
+    <span
+      role="button"
+      tabIndex={0}
+      onClick={hear}
+      onKeyDown={(e) => {
+        if (e.key !== "Enter" && e.key !== " ") return;
+        e.preventDefault();
+        hear(e);
+      }}
+      className="cursor-pointer py-2"
+    >
+      <Karaoke url={url}>{text}</Karaoke>
     </span>
   );
 }
 
-/** The phrase itself: Nepali first and biggest, meaning and romanization under it. */
+/** A phrase's Nepali, with each letter that has a sound tappable on its own. */
+function PhraseText({ item }: { item: Item }) {
+  const sounds = useContext(LetterSounds);
+  const parts = useMemo(() => splitLetters(item.ne), [item.ne]);
+  return (
+    <Karaoke url={item.audioUrl} className="text-[23px] leading-snug sm:text-[26px]">
+      {parts.map((part, i) => {
+        const url = part.letter ? sounds.get(soundKey(part.text)) : undefined;
+        return url ? <LetterSound key={i} text={part.text} url={url} /> : <Fragment key={i}>{part.text}</Fragment>;
+      })}
+    </Karaoke>
+  );
+}
+
+/**
+ * The phrase itself: Nepali first and biggest, meaning and romanization under
+ * it. Tapping a letter plays just that letter; anywhere else plays the phrase.
+ */
 function PhraseBody({ item, hint }: { item: Item; hint?: string }) {
   const playing = usePlaying(item.audioUrl);
   return (
-    <button
-      type="button"
+    <div
       data-audio={item.audioUrl ?? undefined}
       onClick={() => toggle(item.audioUrl, playing)}
-      className="flex w-full items-start gap-4 text-left"
+      className="flex w-full cursor-pointer items-start gap-4 text-left"
     >
       <div className="min-w-0 flex-1">
-        <Karaoke url={item.audioUrl} className="text-[23px] leading-snug sm:text-[26px]">
-          {item.ne}
-        </Karaoke>
+        <PhraseText item={item} />
         {item.ja && <p className="mt-1.5 text-[16px]">{item.ja}</p>}
         {item.roman && <p className="roman mt-1 text-[15px] text-muted">{item.roman}</p>}
         {hint && <p className="mt-2 text-[13px] font-bold text-voice">{hint}</p>}
       </div>
-      <SoundIcon playing={playing} hasAudio={!!item.audioUrl} />
-    </button>
+      <SoundIcon playing={playing} hasAudio={!!item.audioUrl} onClick={() => toggle(item.audioUrl, playing)} />
+    </div>
   );
 }
 
@@ -281,6 +332,7 @@ export function ChapterView() {
   const nowPlaying = useNowPlaying();
   const [guide, setGuide] = useState<Item | null>(null);
   const showPronunciation = useShowPronunciation();
+  const { data: letterSounds } = useLetterSounds(!!chapter && chapter.track !== "script");
 
   useEffect(() => () => stop(), []);
   useEffect(() => {
@@ -367,15 +419,22 @@ export function ChapterView() {
           ))}
         </div>
       ) : (
-        <List>
-          {groups.map((group) =>
-            group.length > 1 ? (
-              <VariantRow key={group[0]!.id} variants={group} />
-            ) : (
-              <PhraseRow key={group[0]!.id} item={group[0]!} />
-            ),
+        <LetterSounds.Provider value={letterSounds ?? NO_SOUNDS}>
+          {!!letterSounds?.size && (
+            <p className="mb-3 flex items-center gap-1.5 text-[13px] text-muted">
+              <Hand className="size-4 shrink-0" /> 文字をタップすると、その文字だけの音が聞けます
+            </p>
           )}
-        </List>
+          <List>
+            {groups.map((group) =>
+              group.length > 1 ? (
+                <VariantRow key={group[0]!.id} variants={group} />
+              ) : (
+                <PhraseRow key={group[0]!.id} item={group[0]!} />
+              ),
+            )}
+          </List>
+        </LetterSounds.Provider>
       )}
 
       <NowPlayingBar items={items} />
