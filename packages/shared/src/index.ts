@@ -49,7 +49,8 @@ const itemFields = {
   note: longText,
   register: z.enum(REGISTERS).nullable(),
   // items sharing a group are variants of one expression (e.g. the same
-  // question at each politeness tier) and are shown together
+  // question at each politeness tier) and are shown together; in a script
+  // chapter it is the consonant whose barakhari row a syllable belongs to
   group: text.max(100),
 };
 

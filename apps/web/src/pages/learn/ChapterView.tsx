@@ -22,7 +22,7 @@ const toggle = (url: string | null, playing: boolean) => {
   else play(url);
 };
 
-function LetterTile({ item, onInfo }: { item: Item; onInfo?: () => void }) {
+function LetterTile({ item, onInfo, compact }: { item: Item; onInfo?: () => void; compact?: boolean }) {
   const playing = usePlaying(item.audioUrl);
   return (
     <div className="relative">
@@ -33,15 +33,30 @@ function LetterTile({ item, onInfo }: { item: Item; onInfo?: () => void }) {
         aria-label={item.roman || item.ne}
         onClick={() => toggle(item.audioUrl, playing)}
         className={clsx(
-          "press flex aspect-square w-full flex-col items-center justify-center rounded-[20px] border-2 bg-surface transition-colors",
+          "press flex aspect-square w-full flex-col items-center justify-center border-2 bg-surface transition-colors",
+          compact ? "rounded-[16px]" : "rounded-[20px]",
           playing ? "border-accent" : "border-transparent shadow-card",
           !item.audioUrl && "border-dashed !border-line opacity-50 shadow-none",
         )}
       >
-        <Karaoke url={item.audioUrl} className="text-[46px] leading-none sm:text-[52px]">
+        <Karaoke
+          url={item.audioUrl}
+          className={clsx("leading-none", compact ? "text-[34px] sm:text-[44px]" : "text-[46px] sm:text-[52px]")}
+        >
           {item.ne}
         </Karaoke>
-        {item.roman && <span className="roman mt-2 text-[15px] text-muted">{item.roman}</span>}
+        {item.roman && (
+          <span
+            className={clsx(
+              "roman text-muted",
+// on small tiles, clear the info icon
+              compact ? "mt-1.5 text-[13px]" : "mt-2 text-[15px]",
+              compact && onInfo && "pr-3",
+            )}
+          >
+            {item.roman}
+          </span>
+        )}
       </button>
       {onInfo && (
         // big invisible hit area around a small icon
@@ -49,12 +64,57 @@ function LetterTile({ item, onInfo }: { item: Item; onInfo?: () => void }) {
           type="button"
           aria-label="発音のしかた"
           onClick={onInfo}
-          className="press absolute right-0 bottom-0 grid size-11 place-items-center text-muted/45 hover:text-ink"
+          className={clsx(
+            "press absolute right-0 bottom-0 grid place-items-center text-muted/45 hover:text-ink",
+            compact ? "size-8" : "size-11",
+          )}
         >
-          <Info className="size-[17px]" />
+          <Info className={compact ? "size-[13px]" : "size-[17px]"} />
         </button>
       )}
     </div>
+  );
+}
+
+/** One consonant's barakhari: its letter, a button that plays the row, then the syllables. */
+function LetterRow({ items, infoFor }: { items: Item[]; infoFor: (item: Item) => (() => void) | undefined }) {
+  const run = usePlayRun();
+  const urls = items.flatMap((i) => (i.audioUrl ? [i.audioUrl] : []));
+  const playing = !!run && run.urls.length === urls.length && run.urls[0] === urls[0];
+  return (
+    <section>
+      <div className="mb-3 flex items-center gap-3">
+        <h2 lang="ne" className="text-[28px] leading-none">
+          {items[0]!.group}
+        </h2>
+        <span className="h-px flex-1 bg-line" />
+        {urls.length > 1 && (
+          <button
+            type="button"
+            onClick={() => (playing ? stop() : playAll(urls))}
+            className={clsx(
+              "press flex h-9 items-center gap-1.5 rounded-full px-3.5 text-[13px] font-bold transition-colors",
+              playing ? "bg-ink text-bg" : "bg-accent-soft text-accent",
+            )}
+          >
+            {playing ? (
+              <>
+                <Square className="size-3" fill="currentColor" /> 停止
+              </>
+            ) : (
+              <>
+                <Play className="size-3.5" fill="currentColor" /> 通して聞く
+              </>
+            )}
+          </button>
+        )}
+      </div>
+      <div className="grid grid-cols-4 gap-2 sm:grid-cols-6 sm:gap-3">
+        {items.map((item) => (
+          <LetterTile key={item.id} item={item} onInfo={infoFor(item)} compact />
+        ))}
+      </div>
+    </section>
   );
 }
 
@@ -163,7 +223,7 @@ function VariantRow({ variants }: { variants: Item[] }) {
 
 const registerRank = (i: Item) => (i.register ? REGISTER_ORDER.indexOf(i.register) : REGISTER_ORDER.length);
 
-/** Collapses items sharing a group into one entry, placed where the first one sits. */
+/** Collapses items sharing a group (politeness tiers, a barakhari row) into one entry, placed where the first one sits. */
 function groupVariants(items: Item[]) {
   const seen = new Set<string>();
   const out: Item[][] = [];
@@ -241,6 +301,8 @@ export function ChapterView() {
   const items = chapter.items.filter((i) => !i.archived);
   const urls = items.flatMap((i) => (i.audioUrl ? [i.audioUrl] : []));
   const isScript = chapter.track === "script";
+  const groups = groupVariants(items);
+  const infoFor = (item: Item) => (showPronunciation && pronunciation(item.ne) ? () => setGuide(item) : undefined);
 
   return (
     // one reading-width column; letters sit five to a row from tablets up,
@@ -291,19 +353,22 @@ export function ChapterView() {
         <EmptyState icon={<Headphones className="size-7" />} title="まだ何もありません">
           音声が追加されると、ここで聞けます。
         </EmptyState>
+      ) : isScript && groups.some((g) => g.length > 1) ? (
+        // a barakhari: one row per consonant
+        <div className="space-y-8">
+          {groups.map((group) => (
+            <LetterRow key={group[0]!.id} items={group} infoFor={infoFor} />
+          ))}
+        </div>
       ) : isScript ? (
         <div className="grid grid-cols-3 gap-3 sm:grid-cols-5">
           {items.map((item) => (
-            <LetterTile
-              key={item.id}
-              item={item}
-              onInfo={showPronunciation && pronunciation(item.ne) ? () => setGuide(item) : undefined}
-            />
+            <LetterTile key={item.id} item={item} onInfo={infoFor(item)} />
           ))}
         </div>
       ) : (
         <List>
-          {groupVariants(items).map((group) =>
+          {groups.map((group) =>
             group.length > 1 ? (
               <VariantRow key={group[0]!.id} variants={group} />
             ) : (

@@ -284,29 +284,41 @@ export function ItemSheet({
           </Field>
         </div>
         {form.kind !== "letter" && (
-          <>
-            <Field label="Politeness" hint={form.register ? `${REGISTER_INFO[form.register].admin} (${REGISTER_INFO[form.register].ja})` : "Neutral / not pronoun-specific"}>
-              {() => (
-                <Segmented
-                  value={form.register ?? "none"}
-                  onChange={(v) => setForm({ ...form, register: v === "none" ? null : v })}
-                  options={REGISTER_OPTIONS}
-                />
-              )}
-            </Field>
-            <Field label="Variant group (optional)" hint="Same key on each tier of one phrase, e.g. ate-food">
-              {(id) => (
-                <TextInput
-                  id={id}
-                  autoCapitalize="none"
-                  autoCorrect="off"
-                  placeholder="ate-food"
-                  value={form.group}
-                  onChange={(e) => setForm({ ...form, group: e.target.value })}
-                />
-              )}
-            </Field>
-          </>
+          <Field label="Politeness" hint={form.register ? `${REGISTER_INFO[form.register].admin} (${REGISTER_INFO[form.register].ja})` : "Neutral / not pronoun-specific"}>
+            {() => (
+              <Segmented
+                value={form.register ?? "none"}
+                onChange={(v) => setForm({ ...form, register: v === "none" ? null : v })}
+                options={REGISTER_OPTIONS}
+              />
+            )}
+          </Field>
+        )}
+        {form.kind === "letter" ? (
+          <Field label="Row (optional)" hint="The consonant whose barakhari row this is, e.g. ख">
+            {(id) => (
+              <TextInput
+                id={id}
+                lang="ne"
+                placeholder="ख"
+                value={form.group}
+                onChange={(e) => setForm({ ...form, group: e.target.value })}
+              />
+            )}
+          </Field>
+        ) : (
+          <Field label="Variant group (optional)" hint="Same key on each tier of one phrase, e.g. ate-food">
+            {(id) => (
+              <TextInput
+                id={id}
+                autoCapitalize="none"
+                autoCorrect="off"
+                placeholder="ate-food"
+                value={form.group}
+                onChange={(e) => setForm({ ...form, group: e.target.value })}
+              />
+            )}
+          </Field>
         )}
         <Field label="Note (Japanese, optional)" hint="Shown to her under the item — usage tips, nuance.">
           {(id) => <TextArea id={id} value={form.note} onChange={(e) => setForm({ ...form, note: e.target.value })} />}
