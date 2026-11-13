@@ -82,8 +82,9 @@ content. See README.md for setup, deploy, and the chapter JSON format.
 1. Base app ✅
 2. Better TTS ✅ (Edge neural voices; Piper still an option)
 3. Devanagari script SRS ✅ (FSRS cards + review logs, listen/read quiz,
-   vowels / consonants / क barakhari in `content/script`). Next for script:
-   more barakhari series, conjuncts later.
+   vowels / consonants in `content/script`). Barakhari for every consonant
+   but ङ ञ, one chapter per group (क ख ग घ …), one row per consonant via
+   `group`. Next for script: conjuncts.
 4. Phrase chapters (greetings, food, family…), likely LLM-drafted in the import
    JSON and checked by the owner. Listening cards: audio → meaning.
 5. Off-server backups (e.g. Litestream / rclone to R2 or B2).

@@ -1,0 +1,50 @@
+{
+  "version": 1,
+  "chapter": {
+    "id": "barakhari-ksha",
+    "track": "script",
+    "titleJa": "バーラカリ（क्ष त्र ज्ञ）",
+    "titleNe": "बाह्रखरी",
+    "descriptionJa": "2つの子音がくっついた文字にも、同じように母音の記号がつきます。",
+    "items": [
+      { "id": "bk-ksha", "kind": "letter", "ne": "क्ष", "roman": "kṣa", "group": "क्ष" },
+      { "id": "bk-kshaa", "kind": "letter", "ne": "क्षा", "roman": "kṣā", "group": "क्ष" },
+      { "id": "bk-kshi", "kind": "letter", "ne": "क्षि", "roman": "kṣi", "group": "क्ष" },
+      { "id": "bk-kshii", "kind": "letter", "ne": "क्षी", "roman": "kṣī", "group": "क्ष" },
+      { "id": "bk-kshu", "kind": "letter", "ne": "क्षु", "roman": "kṣu", "group": "क्ष" },
+      { "id": "bk-kshuu", "kind": "letter", "ne": "क्षू", "roman": "kṣū", "group": "क्ष" },
+      { "id": "bk-kshe", "kind": "letter", "ne": "क्षे", "roman": "kṣe", "group": "क्ष" },
+      { "id": "bk-kshai", "kind": "letter", "ne": "क्षै", "roman": "kṣai", "group": "क्ष" },
+      { "id": "bk-ksho", "kind": "letter", "ne": "क्षो", "roman": "kṣo", "group": "क्ष" },
+      { "id": "bk-kshau", "kind": "letter", "ne": "क्षौ", "roman": "kṣau", "group": "क्ष" },
+      { "id": "bk-ksham", "kind": "letter", "ne": "क्षं", "roman": "kṣaṃ", "group": "क्ष" },
+      { "id": "bk-kshah", "kind": "letter", "ne": "क्षः", "roman": "kṣaḥ", "group": "क्ष" },
+
+      { "id": "bk-tra", "kind": "letter", "ne": "त्र", "roman": "tra", "group": "त्र" },
+      { "id": "bk-traa", "kind": "letter", "ne": "त्रा", "roman": "trā", "group": "त्र" },
+      { "id": "bk-tri", "kind": "letter", "ne": "त्रि", "roman": "tri", "group": "त्र" },
+      { "id": "bk-trii", "kind": "letter", "ne": "त्री", "roman": "trī", "group": "त्र" },
+      { "id": "bk-tru", "kind": "letter", "ne": "त्रु", "roman": "tru", "group": "त्र" },
+      { "id": "bk-truu", "kind": "letter", "ne": "त्रू", "roman": "trū", "group": "त्र" },
+      { "id": "bk-tre", "kind": "letter", "ne": "त्रे", "roman": "tre", "group": "त्र" },
+      { "id": "bk-trai", "kind": "letter", "ne": "त्रै", "roman": "trai", "group": "त्र" },
+      { "id": "bk-tro", "kind": "letter", "ne": "त्रो", "roman": "tro", "group": "त्र" },
+      { "id": "bk-trau", "kind": "letter", "ne": "त्रौ", "roman": "trau", "group": "त्र" },
+      { "id": "bk-tram", "kind": "letter", "ne": "त्रं", "roman": "traṃ", "group": "त्र" },
+      { "id": "bk-trah", "kind": "letter", "ne": "त्रः", "roman": "traḥ", "group": "त्र" },
+
+      { "id": "bk-gya", "kind": "letter", "ne": "ज्ञ", "roman": "gya", "group": "ज्ञ" },
+      { "id": "bk-gyaa", "kind": "letter", "ne": "ज्ञा", "roman": "gyā", "group": "ज्ञ" },
+      { "id": "bk-gyi", "kind": "letter", "ne": "ज्ञि", "roman": "gyi", "group": "ज्ञ" },
+      { "id": "bk-gyii", "kind": "letter", "ne": "ज्ञी", "roman": "gyī", "group": "ज्ञ" },
+      { "id": "bk-gyu", "kind": "letter", "ne": "ज्ञु", "roman": "gyu", "group": "ज्ञ" },
+      { "id": "bk-gyuu", "kind": "letter", "ne": "ज्ञू", "roman": "gyū", "group": "ज्ञ" },
+      { "id": "bk-gye", "kind": "letter", "ne": "ज्ञे", "roman": "gye", "group": "ज्ञ" },
+      { "id": "bk-gyai", "kind": "letter", "ne": "ज्ञै", "roman": "gyai", "group": "ज्ञ" },
+      { "id": "bk-gyo", "kind": "letter", "ne": "ज्ञो", "roman": "gyo", "group": "ज्ञ" },
+      { "id": "bk-gyau", "kind": "letter", "ne": "ज्ञौ", "roman": "gyau", "group": "ज्ञ" },
+      { "id": "bk-gyam", "kind": "letter", "ne": "ज्ञं", "roman": "gyaṃ", "group": "ज्ञ" },
+      { "id": "bk-gyah", "kind": "letter", "ne": "ज्ञः", "roman": "gyaḥ", "group": "ज्ञ" }
+    ]
+  }
+}

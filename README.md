@@ -128,14 +128,16 @@ placeholder, e.g. ones made before TTS clips were trimmed.
 | `track` | `script` (letter tiles) or `phrases` (cards) |
 | `kind` | `letter`, `word` or `phrase` |
 | `register` | `polite` (तपाईं) · `casual` (तिमी) · `intimate` (तँ), or omit |
-| `group` | Same key on each politeness tier of one expression. They're shown as one card with 丁寧 / タメ口 / ぞんざい chips. |
+| `group` | Same key on each politeness tier of one expression. They're shown as one card with 丁寧 / タメ口 / ぞんざい chips. In a script chapter, the consonant a barakhari syllable belongs to (`"ख"`); each consonant gets its own row with a 通して聞く button. |
 | `id` | Optional. Items with an existing id are updated in place, keeping their audio and history. Never change an id once a learner is studying the item. |
 
 Importing never deletes anything. Items missing from the file are kept.
 
 Import from the admin UI (Content → import icon), or from the command line:
 `pnpm chapter:import content/script/*.json` (`nepali-import` on the server).
-The script chapters (vowels, consonants, ka barakhari) live in `content/`.
+The script chapters (vowels, consonants, and a barakhari per consonant group:
+क ख ग घ, च छ ज झ, … क्ष त्र ज्ञ) live in `content/`. ङ and ञ have no barakhari
+row; they hardly ever carry a vowel sign.
 
 ## Review (SRS)
 
