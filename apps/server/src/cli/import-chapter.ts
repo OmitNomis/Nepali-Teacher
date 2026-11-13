@@ -6,6 +6,7 @@ import { chapterFile } from "@nt/shared";
 import { loadConfig } from "../config";
 import { getChapter, importChapter } from "../content";
 import { openDb } from "../db";
+import { queueSyllableTts } from "../syllables";
 import { queueTts } from "../tts";
 
 const files = process.argv.slice(2);
@@ -34,5 +35,9 @@ for (const file of files) {
     `${file}: "${chapter.titleJa}" (${result.chapterId}) ` +
       `created ${result.created}, updated ${result.updated}, untouched ${result.untouched}, TTS queued ${tts}`,
   );
+}
+if (config.tts.provider !== "none") {
+  const queued = queueSyllableTts(db);
+  if (queued) console.log(`TTS queued for ${queued} letters with no sound to tap yet`);
 }
 process.exit(failed ? 1 : 0);

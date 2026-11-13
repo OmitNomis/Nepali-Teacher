@@ -47,6 +47,7 @@ import {
 } from "./content";
 import type { Db } from "./db";
 import { answerCard, buildSession, reviewSummary } from "./srs";
+import { listLetterSounds, queueSyllableTts } from "./syllables";
 import { queueTts } from "./tts";
 
 type ParseResult = { success: boolean; error?: { issues: { path: PropertyKey[]; message: string }[] } };
@@ -66,7 +67,12 @@ export function createApp(db: Db, config: Config) {
   const admin = requireRole(db, "admin");
   const throttle = new LoginThrottle();
   const ttsOn = config.tts.provider !== "none";
-  const autoTts = (ids: string[]) => (ttsOn ? queueTts(db, ids) : 0);
+  const autoTts = (ids: string[]) => {
+    if (!ttsOn) return 0;
+    // new or changed text may have letters with no sound to tap yet
+    queueSyllableTts(db);
+    return queueTts(db, ids);
+  };
 
   const auth = new Hono<AppEnv>()
     .get("/me", (c) => c.json({ user: sessionUser(c, db) }))
@@ -126,6 +132,7 @@ export function createApp(db: Db, config: Config) {
       const chapter = getChapter(db, c.req.param("id"), { includeArchived: false });
       return c.json({ queued: queueTts(db, chapter.items.map((i) => i.id)) });
     })
+    .get("/letter-sounds", anyUser, (c) => c.json(listLetterSounds(db)))
     .get("/review/summary", anyUser, (c) => c.json(reviewSummary(db, c.get("user").id)))
     .get("/review/session", anyUser, zValidator("query", reviewSessionQuery, invalidInput), (c) =>
       c.json(buildSession(db, c.get("user").id, { chapterId: c.req.valid("query").chapter })),

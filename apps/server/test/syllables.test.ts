@@ -1,0 +1,93 @@
+import fs from "node:fs";
+import os from "node:os";
+import path from "node:path";
+import { eq } from "drizzle-orm";
+import { beforeEach, describe, expect, it } from "vitest";
+import { loadConfig, type Config } from "../src/config";
+import { createChapter, createItem, updateItem } from "../src/content";
+import { openDb, type Db } from "../src/db";
+import { TRIM_JOB } from "../src/audio";
+import { audio, items, jobs, syllables } from "../src/db/schema";
+import {
+  listLetterSounds,
+  missingSyllables,
+  queueSyllableTts,
+  SYLLABLE_TTS_JOB,
+  syllableTtsJob,
+} from "../src/syllables";
+import type { TtsProvider } from "../src/tts";
+
+let db: Db;
+let config: Config;
+let script: string;
+let phrases: string;
+
+beforeEach(() => {
+  const dir = fs.mkdtempSync(path.join(os.tmpdir(), "nt-syl-"));
+  config = loadConfig({ DATA_DIR: dir, TTS_PROVIDER: "edge" });
+  db = openDb(config.dbFile, path.join(__dirname, "../drizzle"));
+  script = createChapter(db, { track: "script", titleJa: "文字", titleNe: "", descriptionJa: "" });
+  phrases = createChapter(db, { track: "phrases", titleJa: "あいさつ", titleNe: "", descriptionJa: "" });
+});
+
+const letter = (ne: string, audioId: string | null = null) => {
+  const item = createItem(db, script, { kind: "letter", ne, ja: "", roman: "", note: "" });
+  if (audioId) {
+    db.insert(audio).values({ id: audioId, file: `${audioId}.mp3`, mime: "audio/mpeg", bytes: 1 }).run();
+    db.update(items).set({ audioId }).where(eq(items.id, item.id)).run();
+  }
+  return item;
+};
+const phrase = (ne: string) => createItem(db, phrases, { kind: "phrase", ne, ja: "", roman: "", note: "" });
+const fakeProvider: TtsProvider = async (text, voice) => ({ audio: Buffer.from(`mp3:${text}`), voice });
+
+describe("missingSyllables", () => {
+  it("lists the letters of phrases that no script letter sounds like", () => {
+    letter("न");
+    letter("म");
+    letter("दी"); // sounds like दि
+    phrase("नमस्ते");
+    phrase("दिदी, नमस्ते।");
+    expect(missingSyllables(db)).toEqual(["स्ते"]);
+  });
+
+  it("ignores archived phrases", () => {
+    const p = phrase("स्ते");
+    updateItem(db, p.id, { archived: true });
+    expect(missingSyllables(db)).toEqual([]);
+  });
+});
+
+describe("syllable TTS", () => {
+  it("queues each missing syllable once", () => {
+    phrase("नमस्ते");
+    expect(queueSyllableTts(db)).toBe(3);
+    expect(queueSyllableTts(db)).toBe(0);
+  });
+
+  it("saves a trimmed-to-be placeholder that the letter sounds list", async () => {
+    letter("न", "rec-na");
+    phrase("नमस्ते");
+    await syllableTtsJob(db, config, fakeProvider)({ ne: "स्ते" });
+
+    const row = db.select().from(syllables).where(eq(syllables.ne, "स्ते")).get()!;
+    expect(db.select().from(audio).where(eq(audio.id, row.audioId!)).get()!.source).toBe("tts");
+    expect(db.select().from(jobs).where(eq(jobs.type, TRIM_JOB)).all().map((j) => j.payload)).toEqual([
+      { audioId: row.audioId },
+    ]);
+    expect(missingSyllables(db)).toEqual(["म"]);
+    expect(listLetterSounds(db)).toEqual([
+      { ne: "न", audioUrl: "/api/audio/rec-na" },
+      { ne: "स्ते", audioUrl: `/api/audio/${row.audioId}` },
+    ]);
+  });
+
+  it("skips a syllable a script letter now covers", async () => {
+    phrase("नमस्ते");
+    queueSyllableTts(db);
+    letter("स्ते");
+    await syllableTtsJob(db, config, fakeProvider)({ ne: "स्ते" });
+    expect(db.select().from(syllables).all()).toEqual([]);
+    expect(db.select().from(jobs).where(eq(jobs.type, SYLLABLE_TTS_JOB)).all()).toHaveLength(3);
+  });
+});

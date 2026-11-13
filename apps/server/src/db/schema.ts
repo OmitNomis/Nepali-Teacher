@@ -82,6 +82,14 @@ export const items = sqliteTable(
   (t) => [index("items_chapter_idx").on(t.chapterId, t.position)],
 );
 
+// A letter of a phrase with no script item to borrow a recording from (e.g.
+// a conjunct like स्ते), so it gets its own clip. Keyed by the letter itself.
+export const syllables = sqliteTable("syllables", {
+  ne: text("ne").primaryKey(),
+  audioId: text("audio_id").references(() => audio.id, { onDelete: "set null" }),
+  createdAt: createdAt(),
+});
+
 export const JOB_STATUSES = ["pending", "running", "done", "failed"] as const;
 
 export const jobs = sqliteTable(
@@ -167,4 +175,5 @@ export type Chapter = typeof chapters.$inferSelect;
 export type Item = typeof items.$inferSelect;
 export type Audio = typeof audio.$inferSelect;
 export type Job = typeof jobs.$inferSelect;
+export type Syllable = typeof syllables.$inferSelect;
 export type CardRow = typeof cards.$inferSelect;

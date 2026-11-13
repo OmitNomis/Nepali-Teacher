@@ -5,7 +5,7 @@ import { eq } from "drizzle-orm";
 import type { Config } from "./config";
 import { NotFoundError } from "./content";
 import type { Db } from "./db";
-import { audio, items } from "./db/schema";
+import { audio, items, syllables } from "./db/schema";
 import { newId } from "./ids";
 import { enqueue, PermanentJobError } from "./jobs";
 
@@ -117,7 +117,7 @@ const FILTER = `${SILENCE},areverse,${SILENCE},areverse,loudnorm=I=-16:TP=-1.5:L
 
 /**
  * Job: produce a trimmed AAC copy as a new immutable audio row and point the
- * item at it. Audio URLs never change content, so clients can cache forever.
+ * item (or syllable) at it. Audio URLs never change content, so clients can cache forever.
  * Runs for recordings and TTS alike (Edge pads its clips with a second or
  * more of silence, which would throw off the karaoke wipe and play-all).
  */
@@ -138,8 +138,10 @@ export function trimJob(db: Db, config: Config) {
     const bytes = (await fs.promises.stat(out)).size;
 
     const swapped = db.transaction((tx) => {
-      const stillUsed = tx.select().from(items).where(eq(items.audioId, audioId)).all();
-      if (stillUsed.length === 0) return false;
+      const stillUsed =
+        tx.select({ id: items.id }).from(items).where(eq(items.audioId, audioId)).all().length +
+        tx.select({ ne: syllables.ne }).from(syllables).where(eq(syllables.audioId, audioId)).all().length;
+      if (stillUsed === 0) return false;
       // a trimmed TTS placeholder is still a placeholder, in the same voice
       tx.insert(audio)
         .values({
@@ -154,6 +156,7 @@ export function trimJob(db: Db, config: Config) {
         })
         .run();
       tx.update(items).set({ audioId: id }).where(eq(items.audioId, audioId)).run();
+      tx.update(syllables).set({ audioId: id }).where(eq(syllables.audioId, audioId)).run();
       retireAudio(tx, audioId);
       return true;
     });
