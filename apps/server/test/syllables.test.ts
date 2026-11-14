@@ -42,19 +42,45 @@ const phrase = (ne: string) => createItem(db, phrases, { kind: "phrase", ne, ja:
 const fakeProvider: TtsProvider = async (text, voice) => ({ audio: Buffer.from(`mp3:${text}`), voice });
 
 describe("missingSyllables", () => {
-  it("lists the letters of phrases that no script letter sounds like", () => {
+  it("lists the letters of phrases no script letter spells exactly", () => {
     letter("न");
     letter("म");
-    letter("दी"); // sounds like दि
+    letter("दी");
     phrase("नमस्ते");
     phrase("दिदी, नमस्ते।");
-    expect(missingSyllables(db)).toEqual(["स्ते"]);
+    expect(missingSyllables(db)).toEqual(["स्ते", "दि"]);
+  });
+
+  it("never lets a look-alike stand in: ण is not न, श is not स", () => {
+    letter("ण");
+    letter("श");
+    phrase("नमस्ते सर");
+    expect(missingSyllables(db)).toEqual(["न", "म", "स्ते", "स", "र"]);
   });
 
   it("ignores archived phrases", () => {
     const p = phrase("स्ते");
     updateItem(db, p.id, { archived: true });
     expect(missingSyllables(db)).toEqual([]);
+  });
+});
+
+describe("listLetterSounds", () => {
+  it("keeps letters the quiz treats as one sound apart", () => {
+    letter("ण", "rec-nna");
+    letter("न", "rec-na");
+    letter("श", "rec-sha");
+    letter("स", "rec-sa");
+    const url = new Map(listLetterSounds(db).map((s) => [s.ne, s.audioUrl]));
+    expect(url.get("न")).toBe("/api/audio/rec-na");
+    expect(url.get("स")).toBe("/api/audio/rec-sa");
+  });
+
+  it("plays a human recording of a letter over a TTS one of the same letter", () => {
+    letter("क", "tts-ka");
+    db.update(audio).set({ source: "tts" }).where(eq(audio.id, "tts-ka")).run();
+    letter("क", "rec-ka");
+    expect(listLetterSounds(db)).toEqual([{ ne: "क", audioUrl: "/api/audio/rec-ka" }]);
   });
 });
 

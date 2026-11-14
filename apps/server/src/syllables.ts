@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
-import { and, eq, inArray, isNotNull, ne, sql } from "drizzle-orm";
-import { letters, soundKey } from "@nt/shared";
+import { and, asc, eq, inArray, isNotNull, ne, sql } from "drizzle-orm";
+import { letterKey, letters } from "@nt/shared";
 import type { Config } from "./config";
 import type { Db } from "./db";
 import { audio, chapters, items, jobs, syllables } from "./db/schema";
@@ -17,21 +17,23 @@ const audioUrl = (id: string) => `/api/audio/${id}`;
 /** Script letters the learner can see, with their audio if they have any. */
 function scriptLetters(db: Pick<Db, "select">) {
   return db
-    .select({ ne: items.ne, audioId: items.audioId })
+    .select({ ne: items.ne, audioId: items.audioId, source: audio.source })
     .from(items)
     .innerJoin(chapters, eq(items.chapterId, chapters.id))
+    .leftJoin(audio, eq(items.audioId, audio.id))
     .where(and(eq(chapters.track, "script"), eq(items.archived, false), eq(chapters.archived, false)))
+    .orderBy(asc(chapters.position), asc(items.position))
     .all();
 }
 
 /**
- * Letters in phrases that no script letter covers (sounds the same as) and
- * that don't have a clip of their own yet, e.g. conjuncts like स्ते.
+ * Letters in phrases with no script letter of the exact same spelling and no
+ * clip of their own yet, e.g. conjuncts like स्ते.
  */
 export function missingSyllables(db: Pick<Db, "select">) {
-  const covered = new Set(scriptLetters(db).map((l) => soundKey(l.ne)));
+  const covered = new Set(scriptLetters(db).map((l) => letterKey(l.ne)));
   for (const s of db.select({ ne: syllables.ne }).from(syllables).where(isNotNull(syllables.audioId)).all()) {
-    covered.add(soundKey(s.ne));
+    covered.add(letterKey(s.ne));
   }
   const phrases = db
     .select({ ne: items.ne })
@@ -41,7 +43,7 @@ export function missingSyllables(db: Pick<Db, "select">) {
   const missing = new Map<string, string>();
   for (const p of phrases) {
     for (const l of letters(p.ne)) {
-      const key = soundKey(l);
+      const key = letterKey(l);
       if (!covered.has(key) && !missing.has(key)) missing.set(key, l);
     }
   }
@@ -98,16 +100,18 @@ export function syllableTtsJob(db: Db, config: Config, provider: TtsProvider) {
 }
 
 /**
- * Every letter with a sound, for tapping letters in a phrase: script letters
- * first (their recordings are the real thing), then the syllable clips.
+ * Every letter with a sound, for tapping letters in a phrase. A letter in
+ * several script chapters (क in consonants and barakhari) plays a human
+ * recording over TTS; syllable clips only fill in letters no script item has.
  */
 export function listLetterSounds(db: Db) {
-  const sounds = new Map<string, { ne: string; audioUrl: string }>();
-  const add = (ne: string, audioId: string | null) => {
-    const key = soundKey(ne);
-    if (audioId && !sounds.has(key)) sounds.set(key, { ne, audioUrl: audioUrl(audioId) });
+  const sounds = new Map<string, { ne: string; audioUrl: string; recorded: boolean }>();
+  const add = (ne: string, audioId: string | null, recorded: boolean) => {
+    const key = letterKey(ne);
+    const have = sounds.get(key);
+    if (audioId && (!have || (recorded && !have.recorded))) sounds.set(key, { ne: key, audioUrl: audioUrl(audioId), recorded });
   };
-  for (const l of scriptLetters(db)) add(l.ne, l.audioId);
-  for (const s of db.select().from(syllables).all()) add(s.ne, s.audioId);
-  return [...sounds.values()];
+  for (const l of scriptLetters(db)) add(l.ne, l.audioId, l.source === "recording");
+  for (const s of db.select().from(syllables).all()) add(s.ne, s.audioId, false);
+  return [...sounds.values()].map(({ ne, audioUrl }) => ({ ne, audioUrl }));
 }

@@ -39,5 +39,11 @@ export function splitLetters(text: string): TextPart[] {
   return parts;
 }
 
+/**
+ * Key for finding a letter's own clip: the exact letter, not soundKey, since
+ * letters the quiz accepts for each other (ण/न, श/ष/स) still sound different.
+ */
+export const letterKey = (letter: string) => letter.trim().normalize("NFC");
+
 /** Just the letters, e.g. for working out which ones need a sound. */
 export const letters = (text: string) => splitLetters(text).flatMap((p) => (p.letter ? [p.text] : []));

@@ -44,9 +44,10 @@ content. See README.md for setup, deploy, and the chapter JSON format.
 - Audio: human recordings always win. TTS only fills gaps as placeholders,
   `audio.source = "tts"`, with `audio.voice` = the voice that actually spoke it.
 - Each letter (akshara, `splitLetters` in shared) of a phrase is tappable and
-  plays that letter alone. It borrows the recording of a script item that
-  sounds the same (`soundKey`); letters with none (conjuncts like स्ते, ँ forms)
-  get a TTS clip in the `syllables` table. There's no way to record those
+  plays that letter alone. It borrows the recording of the script item spelled
+  exactly the same (`letterKey`, never `soundKey`: the owner hears ण/न and
+  श/स apart); letters with none (conjuncts like स्ते, ँ forms) get a TTS clip
+  in the `syllables` table. There's no way to record those
   yet, and `nepali-tts-regenerate` doesn't redo them.
 - Pronunciation: `packages/shared/src/articulation.ts` holds place/manner/
   voicing/aspiration and a Japanese tip per letter; `MouthDiagram` draws a

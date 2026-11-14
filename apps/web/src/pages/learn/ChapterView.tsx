@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { Hand, Headphones, Info, Pause, Play, Square, Volume2, X, Zap } from "lucide-react";
 import { createContext, Fragment, useContext, useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router";
-import { pronunciation, soundKey, splitLetters } from "@nt/shared";
+import { letterKey, pronunciation, splitLetters } from "@nt/shared";
 import { EqBars, Karaoke } from "../../components/audio";
 import { PronunciationSheet } from "../../components/Pronunciation";
 import { EmptyState, List, PageHeader, PageLoader } from "../../components/ui";
@@ -139,7 +139,7 @@ function SoundIcon({ playing, hasAudio, onClick }: { playing: boolean; hasAudio:
   );
 }
 
-// clip URL per letter, keyed by soundKey; empty until loaded
+// clip URL per letter, keyed by letterKey; empty until loaded
 const NO_SOUNDS = new Map<string, string>();
 const LetterSounds = createContext(NO_SOUNDS);
 
@@ -176,7 +176,7 @@ function PhraseText({ item }: { item: Item }) {
   return (
     <Karaoke url={item.audioUrl} className="text-[23px] leading-snug sm:text-[26px]">
       {parts.map((part, i) => {
-        const url = part.letter ? sounds.get(soundKey(part.text)) : undefined;
+        const url = part.letter ? sounds.get(letterKey(part.text)) : undefined;
         return url ? <LetterSound key={i} text={part.text} url={url} /> : <Fragment key={i}>{part.text}</Fragment>;
       })}
     </Karaoke>

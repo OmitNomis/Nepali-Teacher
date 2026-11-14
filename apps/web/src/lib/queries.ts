@@ -1,5 +1,5 @@
 import { useQuery } from "@tanstack/react-query";
-import { soundKey } from "@nt/shared";
+import { letterKey } from "@nt/shared";
 import { client, unwrap } from "./api";
 
 export const useMe = () =>
@@ -50,11 +50,11 @@ export const useReviewSession = (chapterId?: string) =>
     refetchOnWindowFocus: false,
   });
 
-/** Clip URL for each letter that has one, keyed by soundKey (for tapping letters in a phrase). */
+/** Clip URL for each letter that has one, keyed by letterKey (for tapping letters in a phrase). */
 export const useLetterSounds = (enabled = true) =>
   useQuery({
     queryKey: ["letter-sounds"],
     queryFn: () => unwrap(client["letter-sounds"].$get()),
-    select: (sounds) => new Map(sounds.map((s) => [soundKey(s.ne), s.audioUrl])),
+    select: (sounds) => new Map(sounds.map((s) => [letterKey(s.ne), s.audioUrl])),
     enabled,
   });
