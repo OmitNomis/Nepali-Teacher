@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { and, asc, eq, inArray, isNotNull, ne, sql } from "drizzle-orm";
-import { letterKey, letters } from "@nt/shared";
+import { letterKey, letters, splitLetters } from "@nt/shared";
 import type { Config } from "./config";
 import type { Db } from "./db";
 import { audio, chapters, items, jobs, syllables } from "./db/schema";
@@ -27,27 +27,62 @@ function scriptLetters(db: Pick<Db, "select">) {
 }
 
 /**
- * Letters in phrases with no script letter of the exact same spelling and no
- * clip of their own yet, e.g. conjuncts like स्ते.
+ * Letters that only phrases have, with no script letter of the exact same
+ * spelling (e.g. conjuncts like स्ते), in the order they first come up, each
+ * with the word it first came up in.
  */
-export function missingSyllables(db: Pick<Db, "select">) {
-  const covered = new Set(scriptLetters(db).map((l) => letterKey(l.ne)));
-  for (const s of db.select({ ne: syllables.ne }).from(syllables).where(isNotNull(syllables.audioId)).all()) {
-    covered.add(letterKey(s.ne));
-  }
+export function phraseOnlyLetters(db: Pick<Db, "select">) {
+  const script = new Set(scriptLetters(db).map((l) => letterKey(l.ne)));
   const phrases = db
     .select({ ne: items.ne })
     .from(items)
+    .innerJoin(chapters, eq(items.chapterId, chapters.id))
     .where(and(ne(items.kind, "letter"), eq(items.archived, false)))
+    .orderBy(asc(chapters.track), asc(chapters.position), asc(items.position))
     .all();
-  const missing = new Map<string, string>();
+  const found = new Map<string, { ne: string; word: string }>();
   for (const p of phrases) {
-    for (const l of letters(p.ne)) {
-      const key = letterKey(l);
-      if (!covered.has(key) && !missing.has(key)) missing.set(key, l);
+    for (const word of p.ne.split(/\s+/)) {
+      for (const l of letters(word)) {
+        const key = letterKey(l);
+        if (!script.has(key) && !found.has(key)) found.set(key, { ne: key, word: wordOnly(word) });
+      }
     }
   }
-  return [...missing.values()];
+  return found;
+}
+
+// the word without punctuation stuck to it, e.g. "नमस्ते।" → "नमस्ते"
+const wordOnly = (word: string) => splitLetters(word).reduce((w, p) => (p.letter ? w + p.text : w), "");
+
+/** Phrase-only letters with no clip of their own yet. */
+export function missingSyllables(db: Pick<Db, "select">) {
+  const voiced = new Set(
+    db
+      .select({ ne: syllables.ne })
+      .from(syllables)
+      .where(isNotNull(syllables.audioId))
+      .all()
+      .map((s) => letterKey(s.ne)),
+  );
+  return [...phraseOnlyLetters(db).keys()].filter((key) => !voiced.has(key));
+}
+
+/** Phrase-only letters still waiting for a human recording, for the Record tab. */
+export function listSyllablesToRecord(db: Db) {
+  const clips = new Map(
+    db
+      .select({ ne: syllables.ne, audioId: syllables.audioId, source: audio.source })
+      .from(syllables)
+      .leftJoin(audio, eq(syllables.audioId, audio.id))
+      .all()
+      .map((s) => [letterKey(s.ne), s]),
+  );
+  return [...phraseOnlyLetters(db).values()].flatMap(({ ne, word }) => {
+    const clip = clips.get(ne);
+    if (clip?.source === "recording") return [];
+    return [{ ne, word, ttsUrl: clip?.audioId ? audioUrl(clip.audioId) : null }];
+  });
 }
 
 /** Queues TTS for every missing syllable that isn't already queued. */

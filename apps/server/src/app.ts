@@ -12,12 +12,20 @@ import {
   chapterPatch,
   itemInput,
   itemPatch,
+  letterKey,
   loginInput,
   reorderInput,
   reviewAnswer,
   reviewSessionQuery,
 } from "@nt/shared";
-import { deleteItemAudio, getAudio, isSupportedAudio, MAX_AUDIO_BYTES, saveItemAudio } from "./audio";
+import {
+  deleteItemAudio,
+  getAudio,
+  isSupportedAudio,
+  MAX_AUDIO_BYTES,
+  saveItemAudio,
+  saveSyllableAudio,
+} from "./audio";
 import {
   type AppEnv,
   clientIp,
@@ -47,8 +55,21 @@ import {
 } from "./content";
 import type { Db } from "./db";
 import { answerCard, buildSession, reviewSummary } from "./srs";
-import { listLetterSounds, queueSyllableTts } from "./syllables";
+import { listLetterSounds, listSyllablesToRecord, phraseOnlyLetters, queueSyllableTts } from "./syllables";
 import { queueTts } from "./tts";
+
+/** The recording in an upload form, checked for size and type. */
+function uploadedAudio(body: Record<string, unknown>) {
+  const file = body.file;
+  if (!(file instanceof File)) throw new HTTPException(400, { message: "Missing file" });
+  if (file.size === 0 || file.size > MAX_AUDIO_BYTES) {
+    throw new HTTPException(413, { message: "Recording is empty or too large" });
+  }
+  if (!isSupportedAudio(file.type)) {
+    throw new HTTPException(415, { message: `Unsupported audio type ${file.type}` });
+  }
+  return file;
+}
 
 type ParseResult = { success: boolean; error?: { issues: { path: PropertyKey[]; message: string }[] } };
 
@@ -161,16 +182,16 @@ export function createApp(db: Db, config: Config) {
     })
     .get("/items/missing-audio", admin, (c) => c.json(listMissingAudio(db)))
     .post("/items/:id/audio", admin, async (c) => {
-      const body = await c.req.parseBody();
-      const file = body.file;
-      if (!(file instanceof File)) throw new HTTPException(400, { message: "Missing file" });
-      if (file.size === 0 || file.size > MAX_AUDIO_BYTES) {
-        throw new HTTPException(413, { message: "Recording is empty or too large" });
-      }
-      if (!isSupportedAudio(file.type)) {
-        throw new HTTPException(415, { message: `Unsupported audio type ${file.type}` });
-      }
+      const file = uploadedAudio(await c.req.parseBody());
       const id = await saveItemAudio(db, config, c.req.param("id"), file, c.get("user").id);
+      return c.json({ audioId: id, audioUrl: `/api/audio/${id}` }, 201);
+    })
+    .get("/syllables/missing-audio", admin, (c) => c.json(listSyllablesToRecord(db)))
+    .post("/syllables/:ne/audio", admin, async (c) => {
+      const ne = letterKey(c.req.param("ne"));
+      if (!phraseOnlyLetters(db).has(ne)) throw new NotFoundError("No phrase has that letter");
+      const file = uploadedAudio(await c.req.parseBody());
+      const id = await saveSyllableAudio(db, config, ne, file, c.get("user").id);
       return c.json({ audioId: id, audioUrl: `/api/audio/${id}` }, 201);
     })
     .delete("/items/:id/audio", admin, (c) => {

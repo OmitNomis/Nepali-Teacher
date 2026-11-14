@@ -6,10 +6,11 @@ import { beforeEach, describe, expect, it } from "vitest";
 import { loadConfig, type Config } from "../src/config";
 import { createChapter, createItem, updateItem } from "../src/content";
 import { openDb, type Db } from "../src/db";
-import { TRIM_JOB } from "../src/audio";
-import { audio, items, jobs, syllables } from "../src/db/schema";
+import { REMOVE_JOB, saveSyllableAudio, TRIM_JOB } from "../src/audio";
+import { audio, items, jobs, syllables, users } from "../src/db/schema";
 import {
   listLetterSounds,
+  listSyllablesToRecord,
   missingSyllables,
   queueSyllableTts,
   SYLLABLE_TTS_JOB,
@@ -21,11 +22,13 @@ let db: Db;
 let config: Config;
 let script: string;
 let phrases: string;
+let userId: number;
 
 beforeEach(() => {
   const dir = fs.mkdtempSync(path.join(os.tmpdir(), "nt-syl-"));
   config = loadConfig({ DATA_DIR: dir, TTS_PROVIDER: "edge" });
   db = openDb(config.dbFile, path.join(__dirname, "../drizzle"));
+  userId = db.insert(users).values({ username: "admin", displayName: "Admin", passwordHash: "x", role: "admin" }).returning().get().id;
   script = createChapter(db, { track: "script", titleJa: "文字", titleNe: "", descriptionJa: "" });
   phrases = createChapter(db, { track: "phrases", titleJa: "あいさつ", titleNe: "", descriptionJa: "" });
 });
@@ -115,5 +118,45 @@ describe("syllable TTS", () => {
     await syllableTtsJob(db, config, fakeProvider)({ ne: "स्ते" });
     expect(db.select().from(syllables).all()).toEqual([]);
     expect(db.select().from(jobs).where(eq(jobs.type, SYLLABLE_TTS_JOB)).all()).toHaveLength(3);
+  });
+});
+
+describe("recording syllables", () => {
+  const recording = () => new File([Buffer.from("m4a")], "take.m4a", { type: "audio/mp4" });
+
+  it("lists phrase-only letters with the word they come from, until recorded", async () => {
+    letter("न");
+    letter("म");
+    phrase("नमस्ते।");
+    phrase("बोल्नुहोस् न");
+    await syllableTtsJob(db, config, fakeProvider)({ ne: "स्ते" });
+
+    const list = listSyllablesToRecord(db);
+    expect(list.map(({ ne, word }) => [ne, word])).toEqual([
+      ["स्ते", "नमस्ते"],
+      ["बो", "बोल्नुहोस्"],
+      ["ल्नु", "बोल्नुहोस्"],
+      ["होस्", "बोल्नुहोस्"],
+    ]);
+    expect(list[0]!.ttsUrl).toMatch(/^\/api\/audio\//);
+
+    await saveSyllableAudio(db, config, "स्ते", recording(), userId);
+    expect(listSyllablesToRecord(db).map((s) => s.ne)).toEqual(["बो", "ल्नु", "होस्"]);
+  });
+
+  it("replaces the TTS clip, so tapping the letter plays the recording", async () => {
+    phrase("नमस्ते");
+    await syllableTtsJob(db, config, fakeProvider)({ ne: "स्ते" });
+    const tts = db.select().from(syllables).get()!.audioId;
+    const id = await saveSyllableAudio(db, config, "स्ते", recording(), userId);
+
+    expect(listLetterSounds(db)).toContainEqual({ ne: "स्ते", audioUrl: `/api/audio/${id}` });
+    expect(db.select().from(audio).where(eq(audio.id, id)).get()!.source).toBe("recording");
+    // the TTS clip is retired later, not straight away
+    expect(db.select().from(jobs).where(eq(jobs.type, REMOVE_JOB)).all().map((j) => j.payload)).toEqual([
+      { audioId: tts },
+    ]);
+    // and no new TTS gets made for it
+    expect(missingSyllables(db)).not.toContain("स्ते");
   });
 });

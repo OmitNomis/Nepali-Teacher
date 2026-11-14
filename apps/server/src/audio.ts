@@ -48,11 +48,12 @@ function retireAudio(db: Pick<Db, "insert">, audioId: string) {
   enqueue(db, REMOVE_JOB, { audioId }, new Date(Date.now() + KEEP_REPLACED_MS));
 }
 
-/** Job: delete retired audio, unless an item uses it again. */
+/** Job: delete retired audio, unless an item or syllable uses it again. */
 export function removeJob(db: Db, config: Config) {
   return async (payload: unknown) => {
     const { audioId } = payload as { audioId: string };
     if (db.select({ id: items.id }).from(items).where(eq(items.audioId, audioId)).get()) return;
+    if (db.select({ ne: syllables.ne }).from(syllables).where(eq(syllables.audioId, audioId)).get()) return;
     removeAudio(db, config, audioId);
   };
 }
@@ -68,12 +69,7 @@ export async function saveItemAudio(
   const item = db.select().from(items).where(eq(items.id, itemId)).get();
   if (!item) throw new NotFoundError("Item not found");
 
-  const mime = baseMime(file.type);
-  const id = newId();
-  const name = `${id}.${EXT_BY_MIME[mime]}`;
-  fs.mkdirSync(config.audioDir, { recursive: true });
-  await fs.promises.writeFile(path.join(config.audioDir, name), Buffer.from(await file.arrayBuffer()));
-
+  const { id, name, mime } = await writeUpload(config, file);
   db.transaction((tx) => {
     tx.insert(audio).values({ id, file: name, mime, bytes: file.size, createdBy: userId }).run();
     tx.update(items).set({ audioId: id }).where(eq(items.id, itemId)).run();
@@ -81,6 +77,31 @@ export async function saveItemAudio(
     if (item.audioId) retireAudio(tx, item.audioId);
   });
   return id;
+}
+
+/** Stores a recording of a letter that only phrases have (e.g. स्ते), replacing its TTS clip. */
+export async function saveSyllableAudio(db: Db, config: Config, ne: string, file: File, userId: number) {
+  const before = db.select().from(syllables).where(eq(syllables.ne, ne)).get();
+  const { id, name, mime } = await writeUpload(config, file);
+  db.transaction((tx) => {
+    tx.insert(audio).values({ id, file: name, mime, bytes: file.size, createdBy: userId }).run();
+    tx.insert(syllables)
+      .values({ ne, audioId: id })
+      .onConflictDoUpdate({ target: syllables.ne, set: { audioId: id } })
+      .run();
+    enqueue(tx, TRIM_JOB, { audioId: id });
+    if (before?.audioId) retireAudio(tx, before.audioId);
+  });
+  return id;
+}
+
+async function writeUpload(config: Config, file: File) {
+  const mime = baseMime(file.type);
+  const id = newId();
+  const name = `${id}.${EXT_BY_MIME[mime]}`;
+  fs.mkdirSync(config.audioDir, { recursive: true });
+  await fs.promises.writeFile(path.join(config.audioDir, name), Buffer.from(await file.arrayBuffer()));
+  return { id, name, mime };
 }
 
 export function deleteItemAudio(db: Db, config: Config, itemId: string) {
