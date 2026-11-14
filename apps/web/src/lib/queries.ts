@@ -34,6 +34,13 @@ export const useMissingAudio = () =>
     queryFn: () => unwrap(client.items["missing-audio"].$get()),
   });
 
+/** Letters only phrases have (स्ते, होस्…) that still need a human recording. */
+export const useSyllablesToRecord = () =>
+  useQuery({
+    queryKey: ["syllables-to-record"],
+    queryFn: () => unwrap(client.syllables["missing-audio"].$get()),
+  });
+
 export const useReviewSummary = () =>
   useQuery({
     queryKey: ["review-summary"],

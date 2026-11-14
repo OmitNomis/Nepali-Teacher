@@ -46,8 +46,8 @@ content. See README.md for setup, deploy, and the chapter JSON format.
 - Each letter (akshara, `splitLetters` in shared) of a phrase is tappable and
   plays that letter alone. It borrows the recording of the script item spelled
   exactly the same (`letterKey`); letters with none (conjuncts like स्ते, ँ forms) get a TTS clip
-  in the `syllables` table. There's no way to record those
-  yet, and `nepali-tts-regenerate` doesn't redo them.
+  in the `syllables` table, recordable in the Record tab under "Letters in
+  phrases". `nepali-tts-regenerate` doesn't redo syllable clips.
 - Pronunciation: `packages/shared/src/articulation.ts` holds place/manner/
   voicing/aspiration and a Japanese tip per letter; `MouthDiagram` draws a
   cutaway from that data (no image assets). Tips compare to Japanese sounds.

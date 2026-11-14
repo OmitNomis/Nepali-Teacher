@@ -24,11 +24,20 @@ export async function unwrap<T extends ClientResponse<unknown>>(
   return (await r.json()) as never;
 }
 
-export async function uploadAudio(itemId: string, blob: Blob) {
+/** What a recording is for: an item, or a letter that only phrases have. */
+export type AudioTarget = { itemId: string } | { syllable: string };
+
+export const targetKey = (t: AudioTarget) => ("itemId" in t ? `item:${t.itemId}` : `syllable:${t.syllable}`);
+
+export async function uploadAudio(target: AudioTarget, blob: Blob) {
   const form = new FormData();
   const ext = blob.type.includes("webm") ? "webm" : blob.type.includes("ogg") ? "ogg" : "m4a";
   form.append("file", new File([blob], `recording.${ext}`, { type: blob.type }));
-  const res = await fetch(`/api/items/${encodeURIComponent(itemId)}/audio`, {
+  const url =
+    "itemId" in target
+      ? `/api/items/${encodeURIComponent(target.itemId)}/audio`
+      : `/api/syllables/${encodeURIComponent(target.syllable)}/audio`;
+  const res = await fetch(url, {
     method: "POST",
     body: form,
   });
@@ -42,6 +51,7 @@ export async function uploadAudio(itemId: string, blob: Blob) {
 export type ChapterSummary = InferResponseType<typeof client.chapters.$get, 200>[number];
 export type ChapterDetail = InferResponseType<(typeof client.chapters)[":id"]["$get"], 200>;
 export type Item = ChapterDetail["items"][number];
+export type SyllableToRecord = InferResponseType<(typeof client.syllables)["missing-audio"]["$get"], 200>[number];
 export type MissingItem = InferResponseType<(typeof client.items)["missing-audio"]["$get"], 200>[number];
 export type Me = InferResponseType<typeof client.auth.me.$get>["user"];
 export type ReviewSummary = InferResponseType<typeof client.review.summary.$get, 200>;

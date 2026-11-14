@@ -2,7 +2,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import clsx from "clsx";
 import { LoaderCircle, Mic, Pause, RotateCcw, Square, Volume2 } from "lucide-react";
 import { useEffect, useMemo, useRef, type ReactNode } from "react";
-import { uploadAudio } from "../lib/api";
+import { targetKey, uploadAudio, type AudioTarget } from "../lib/api";
 import { play, progress, stop, useNowPlaying } from "../lib/player";
 import { useRecorder } from "../lib/recorder";
 import { useToast } from "./ui";
@@ -91,15 +91,17 @@ export function EqBars({ className }: { className?: string }) {
 
 const fmt = (ms: number) => `${Math.floor(ms / 1000)}.${Math.floor((ms % 1000) / 100)}s`;
 
-function useSaveAudio(itemId: string, onSaved?: () => void) {
+function useSaveAudio(target: AudioTarget, onSaved?: () => void) {
   const qc = useQueryClient();
   const toast = useToast();
   return useMutation({
-    mutationFn: (blob: Blob) => uploadAudio(itemId, blob),
+    mutationFn: (blob: Blob) => uploadAudio(target, blob),
     onSuccess: () => {
       void qc.invalidateQueries({ queryKey: ["chapter"] });
       void qc.invalidateQueries({ queryKey: ["chapters"] });
       void qc.invalidateQueries({ queryKey: ["missing-audio"] });
+      void qc.invalidateQueries({ queryKey: ["syllables-to-record"] });
+      void qc.invalidateQueries({ queryKey: ["letter-sounds"] });
       onSaved?.();
     },
     onError: (e) => toast(e.message, "error"),
@@ -109,7 +111,7 @@ function useSaveAudio(itemId: string, onSaved?: () => void) {
 /** Compact mic button for list rows: tap to record, tap to stop, saves right away. */
 export function RecordButton({ itemId, hasAudio }: { itemId: string; hasAudio: boolean }) {
   const rec = useRecorder();
-  const save = useSaveAudio(itemId);
+  const save = useSaveAudio({ itemId });
   const toast = useToast();
 
   useEffect(() => {
@@ -175,15 +177,16 @@ function LevelBars({ level, active }: { level: number; active: boolean }) {
  * Big studio-style recorder: record → listen back → save or redo.
  * Used by the recording queue where you go through many items in a row.
  */
-export function StudioRecorder({ itemId, onSaved }: { itemId: string; onSaved: () => void }) {
+export function StudioRecorder({ target, onSaved }: { target: AudioTarget; onSaved: () => void }) {
   const rec = useRecorder();
-  const save = useSaveAudio(itemId, onSaved);
+  const save = useSaveAudio(target, onSaved);
+  const key = targetKey(target);
   const previewUrl = useMemo(() => (rec.blob ? URL.createObjectURL(rec.blob) : null), [rec.blob]);
   const { reset } = rec;
 
   useEffect(() => () => void (previewUrl && URL.revokeObjectURL(previewUrl)), [previewUrl]);
   // new item → fresh recorder state (the mic stream stays open)
-  useEffect(() => reset(), [itemId, reset]);
+  useEffect(() => reset(), [key, reset]);
   // auto-play the take so you can judge it hands-free
   useEffect(() => {
     if (previewUrl) play(previewUrl);
