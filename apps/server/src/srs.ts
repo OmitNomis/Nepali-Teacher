@@ -1,6 +1,6 @@
 import { and, asc, eq, gte, isNotNull, sql } from "drizzle-orm";
 import { createEmptyCard, fsrs, generatorParameters, Rating, type Card, type Grade } from "ts-fsrs";
-import { CARD_TYPES, soundKey, type CardType, type ReviewAnswer } from "@nt/shared";
+import { CARD_TYPES, letterKey, type CardType, type ReviewAnswer } from "@nt/shared";
 import { NotFoundError } from "./content";
 import type { Db } from "./db";
 import { cards, chapters, items, reviewLogs, type CardRow } from "./db/schema";
@@ -70,9 +70,9 @@ function shuffle<T>(list: T[]) {
   return a;
 }
 
-/** Wrong answers that don't sound like the answer or each other, same chapter first. */
+/** Wrong answers that aren't the answer's letter or each other's, same chapter first. */
 function pickOptions(answer: QuizItem, all: QuizItem[]) {
-  const used = new Set([soundKey(answer.ne)]);
+  const used = new Set([letterKey(answer.ne)]);
   const picks: QuizItem[] = [];
   const pool = [
     ...shuffle(all.filter((i) => i.chapterId === answer.chapterId)),
@@ -80,7 +80,7 @@ function pickOptions(answer: QuizItem, all: QuizItem[]) {
   ];
   for (const item of pool) {
     if (picks.length >= OPTIONS - 1) break;
-    const key = soundKey(item.ne);
+    const key = letterKey(item.ne);
     if (used.has(key)) continue;
     used.add(key);
     picks.push(item);
@@ -193,13 +193,14 @@ const fromFsrs = (card: Card) => ({
 
 /**
  * Grades an answer and reschedules the card (creating it on first answer).
- * Picking a letter that sounds the same counts as right.
+ * Picking the same letter from another chapter (क in consonants for the
+ * barakhari's क) counts as right; a different letter never does.
  */
 export function answerCard(db: Db, userId: number, input: ReviewAnswer, now = new Date()) {
   const item = db.select().from(items).where(eq(items.id, input.itemId)).get();
   const chosen = db.select().from(items).where(eq(items.id, input.chosenItemId)).get();
   if (!item || !chosen) throw new NotFoundError("Item not found");
-  const correct = chosen.id === item.id || soundKey(chosen.ne) === soundKey(item.ne);
+  const correct = chosen.id === item.id || letterKey(chosen.ne) === letterKey(item.ne);
   const grade: Grade = correct ? Rating.Good : Rating.Again;
 
   return db.transaction((tx) => {

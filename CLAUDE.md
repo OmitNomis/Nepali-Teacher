@@ -45,8 +45,7 @@ content. See README.md for setup, deploy, and the chapter JSON format.
   `audio.source = "tts"`, with `audio.voice` = the voice that actually spoke it.
 - Each letter (akshara, `splitLetters` in shared) of a phrase is tappable and
   plays that letter alone. It borrows the recording of the script item spelled
-  exactly the same (`letterKey`, never `soundKey`: the owner hears ण/न and
-  श/स apart); letters with none (conjuncts like स्ते, ँ forms) get a TTS clip
+  exactly the same (`letterKey`); letters with none (conjuncts like स्ते, ँ forms) get a TTS clip
   in the `syllables` table. There's no way to record those
   yet, and `nepali-tts-regenerate` doesn't redo them.
 - Pronunciation: `packages/shared/src/articulation.ts` holds place/manner/
@@ -68,8 +67,10 @@ content. See README.md for setup, deploy, and the chapter JSON format.
   home opens the account); admins get a tab bar, or a sidebar on wide screens.
   The app icon is generated from Tiro's अ outline, not drawn by hand.
 - SRS: cards are created on first answer (no card = new) and keyed by
-  (user, item, type). `soundKey` in shared defines which letters count as the
-  same sound; the owner (native speaker) may want to adjust it.
+  (user, item, type). No letters count as "the same sound" (owner's call,
+  2026-10-28: ण/न, श/ष/स, इ/ई, उ/ऊ each have their own recording and are
+  told apart in the quiz). Only the same spelling in two chapters
+  (`letterKey`) counts as one answer.
 
 ## TTS status (as of 2026-10-27)
 - `edge` (keyless default): broke again by 2026-10-27 (msedge-tts 2.1.0 got

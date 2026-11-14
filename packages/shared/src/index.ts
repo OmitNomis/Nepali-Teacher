@@ -113,23 +113,5 @@ export const reviewSessionQuery = z.object({
   chapter: z.string().min(1).optional(),
 });
 
-// Spoken Nepali doesn't distinguish vowel length or the three sibilants, and
-// ण is usually said like न. Letters that only differ in these sound the same,
-// so they're never offered as each other's wrong answers, and picking one for
-// the other counts as right.
-const SAME_SOUND: [RegExp, string][] = [
-  [/ई/g, "इ"],
-  [/ऊ/g, "उ"],
-  [/ी/g, "ि"],
-  [/ू/g, "ु"],
-  [/[शष]/g, "स"],
-  [/ण/g, "न"],
-];
-
-/** Key that's equal for letters (or syllables) that sound the same. */
-export function soundKey(ne: string) {
-  return SAME_SOUND.reduce((s, [re, to]) => s.replace(re, to), ne.trim());
-}
-
 export * from "./aksharas";
 export * from "./articulation";

@@ -146,8 +146,9 @@ it, pick the letter) and **read** (see it, pick the sound). Scheduling is FSRS
 (`ts-fsrs`); a right answer rates Good, a wrong one Again, and every answer is
 logged with what was picked. The daily review on home introduces up to 10 new
 cards a day in chapter order; a chapter's クイズ button can go past that.
-Letters that sound the same in Nepali (इ/ई, उ/ऊ, श/ष/स, ण/न and their
-matras) are never offered as each other's wrong answers and count as right.
+Every letter is its own answer, even ones that sound alike (इ/ई, उ/ऊ,
+श/ष/स, ण/न): each has its own recording. Only the same letter in two
+chapters (क in consonants and barakhari) counts as the same answer.
 
 ### Prompt template for an LLM
 

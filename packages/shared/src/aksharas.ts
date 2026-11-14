@@ -40,8 +40,8 @@ export function splitLetters(text: string): TextPart[] {
 }
 
 /**
- * Key for finding a letter's own clip: the exact letter, not soundKey, since
- * letters the quiz accepts for each other (ण/न, श/ष/स) still sound different.
+ * Key that's equal only for the same letter, spelled the same: ण and न, श and
+ * स, इ and ई are all different letters with different recordings.
  */
 export const letterKey = (letter: string) => letter.trim().normalize("NFC");
 

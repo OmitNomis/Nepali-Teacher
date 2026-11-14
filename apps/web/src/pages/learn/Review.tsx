@@ -3,7 +3,7 @@ import clsx from "clsx";
 import { Check, Headphones, Sparkles, Volume2, X } from "lucide-react";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, useSearchParams } from "react-router";
-import { soundKey } from "@nt/shared";
+import { letterKey } from "@nt/shared";
 import { EqBars, Karaoke } from "../../components/audio";
 import { PronunciationGuide } from "../../components/Pronunciation";
 import { Button, PageLoader, useToast } from "../../components/ui";
@@ -17,7 +17,7 @@ const MAX_RETRIES = 2;
 const AUTO_NEXT_MS = 1100;
 
 const cardKey = (c: SessionCard) => `${c.itemId}:${c.type}`;
-const sameSound = (a: QuizItem, b: QuizItem) => a.id === b.id || soundKey(a.ne) === soundKey(b.ne);
+const sameLetter = (a: QuizItem, b: QuizItem) => a.id === b.id || letterKey(a.ne) === letterKey(b.ne);
 
 /** Round speaker button; shows an equalizer while its clip plays. */
 function SoundButton({ item, size = "md", className }: { item: QuizItem; size?: "md" | "xl"; className?: string }) {
@@ -74,14 +74,14 @@ function Intro({ item, onDone }: { item: QuizItem; onDone: () => void }) {
 
 function OptionMark({ option, card, result }: { option: QuizItem; card: SessionCard; result: Result | null }) {
   if (!result) return null;
-  if (sameSound(option, card.prompt)) return <Check className="absolute top-2.5 right-2.5 size-5 text-ok" />;
+  if (sameLetter(option, card.prompt)) return <Check className="absolute top-2.5 right-2.5 size-5 text-ok" />;
   if (option.id === result.chosenId) return <X className="absolute top-2.5 right-2.5 size-5 text-miss" />;
   return null;
 }
 
 const optionTone = (option: QuizItem, card: SessionCard, result: Result | null, selected: boolean) =>
   result
-    ? sameSound(option, card.prompt)
+    ? sameLetter(option, card.prompt)
       ? "border-ok bg-ok-soft"
       : option.id === result.chosenId
         ? "border-miss bg-miss-soft"
@@ -359,7 +359,7 @@ export function Review() {
   const answer = (chosenId: string) => {
     if (!card || result) return;
     const chosen = card.options.find((o) => o.id === chosenId)!;
-    const correct = sameSound(chosen, card.prompt);
+    const correct = sameLetter(chosen, card.prompt);
     setResult({ correct, chosenId });
     save.mutate({
       itemId: card.itemId,

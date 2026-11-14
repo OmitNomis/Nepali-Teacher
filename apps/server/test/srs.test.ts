@@ -3,7 +3,7 @@ import os from "node:os";
 import path from "node:path";
 import { eq } from "drizzle-orm";
 import { beforeEach, describe, expect, it } from "vitest";
-import { soundKey } from "@nt/shared";
+import { letterKey } from "@nt/shared";
 import { loadConfig } from "../src/config";
 import { createChapter, createItem, updateChapter, updateItem } from "../src/content";
 import { openDb, type Db } from "../src/db";
@@ -40,18 +40,6 @@ function scriptChapter(letters: string[], { withAudio = true } = {}) {
 
 const VOWELS = ["अ", "आ", "इ", "ई", "उ", "ऊ", "ए", "ऐ", "ओ", "औ"];
 
-describe("soundKey", () => {
-  it("treats letters Nepali doesn't distinguish in speech as the same", () => {
-    expect(soundKey("ई")).toBe(soundKey("इ"));
-    expect(soundKey("की")).toBe(soundKey("कि"));
-    expect(soundKey("कू")).toBe(soundKey("कु"));
-    expect(soundKey("श")).toBe(soundKey("स"));
-    expect(soundKey("ष")).toBe(soundKey("स"));
-    expect(soundKey("आ")).not.toBe(soundKey("अ"));
-    expect(soundKey("ऐ")).not.toBe(soundKey("ए"));
-  });
-});
-
 describe("buildSession", () => {
   it("introduces new cards in chapter order, up to the daily cap", () => {
     scriptChapter(VOWELS);
@@ -63,13 +51,13 @@ describe("buildSession", () => {
     expect(new Set(session.cards.map((c) => c.prompt.ne))).toEqual(new Set(VOWELS.slice(0, 5)));
   });
 
-  it("offers four options including the answer, never a same-sounding one", () => {
+  it("offers four options including the answer, never the same letter twice", () => {
     scriptChapter(VOWELS);
     for (let round = 0; round < 20; round++) {
       for (const card of buildSession(db, userId).cards) {
         expect(card.options).toHaveLength(4);
         expect(card.options.map((o) => o.id)).toContain(card.itemId);
-        const keys = card.options.map((o) => soundKey(o.ne));
+        const keys = card.options.map((o) => letterKey(o.ne));
         expect(new Set(keys).size).toBe(keys.length);
       }
     }
@@ -139,9 +127,20 @@ describe("answerCard", () => {
     expect(db.select().from(reviewLogs).get()).toMatchObject({ rating: 1, correct: false, chosenItemId: ids[1] });
   });
 
-  it("counts a same-sounding letter as right", () => {
-    const { ids } = scriptChapter(["इ", "ई"]);
-    expect(answerCard(db, userId, { itemId: ids[0]!, type: "listen", chosenItemId: ids[1]! }).correct).toBe(true);
+  it("tells apart letters that sound alike: इ/ई, न/ण, स/श/ष", () => {
+    const { ids } = scriptChapter(["इ", "ई", "न", "ण", "स", "श", "ष"]);
+    const answer = (i: number, picked: number) =>
+      answerCard(db, userId, { itemId: ids[i]!, type: "listen", chosenItemId: ids[picked]! }).correct;
+    expect(answer(0, 1)).toBe(false);
+    expect(answer(2, 3)).toBe(false);
+    expect(answer(4, 5)).toBe(false);
+    expect(answer(4, 6)).toBe(false);
+  });
+
+  it("counts the same letter from another chapter as right", () => {
+    const { ids: consonants } = scriptChapter(["क"]);
+    const { ids: barakhari } = scriptChapter(["क", "का"]);
+    expect(answerCard(db, userId, { itemId: barakhari[0]!, type: "listen", chosenItemId: consonants[0]! }).correct).toBe(true);
   });
 
   it("keeps one card per item and type across answers", () => {
