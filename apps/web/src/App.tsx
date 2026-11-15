@@ -4,6 +4,7 @@ import { PageLoader } from "./components/ui";
 import { useMe } from "./lib/queries";
 import { AdminChapter } from "./pages/admin/AdminChapter";
 import { AdminChapters } from "./pages/admin/AdminChapters";
+import { Progress } from "./pages/admin/Progress";
 import { RecordQueue } from "./pages/admin/RecordQueue";
 import { Account } from "./pages/Account";
 import { ChapterView } from "./pages/learn/ChapterView";
@@ -26,6 +27,7 @@ const router = createBrowserRouter([
           { path: "/admin", element: <AdminChapters /> },
           { path: "/admin/chapters/:id", element: <AdminChapter /> },
           { path: "/admin/record", element: <RecordQueue /> },
+          { path: "/admin/progress", element: <Progress /> },
         ],
       },
       { path: "*", element: <Navigate to="/" replace /> },

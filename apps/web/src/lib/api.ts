@@ -53,6 +53,7 @@ export type ChapterDetail = InferResponseType<(typeof client.chapters)[":id"]["$
 export type Item = ChapterDetail["items"][number];
 export type SyllableToRecord = InferResponseType<(typeof client.syllables)["missing-audio"]["$get"], 200>[number];
 export type MissingItem = InferResponseType<(typeof client.items)["missing-audio"]["$get"], 200>[number];
+export type LearnerProgress = InferResponseType<typeof client.progress.$get, 200>[number];
 export type Me = InferResponseType<typeof client.auth.me.$get>["user"];
 export type ReviewSummary = InferResponseType<typeof client.review.summary.$get, 200>;
 export type ReviewSession = InferResponseType<typeof client.review.session.$get, 200>;

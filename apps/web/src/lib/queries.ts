@@ -47,6 +47,12 @@ export const useReviewSummary = () =>
     queryFn: () => unwrap(client.review.summary.$get()),
   });
 
+export const useProgress = () =>
+  useQuery({
+    queryKey: ["progress"],
+    queryFn: () => unwrap(client.progress.$get()),
+  });
+
 /** A quiz session is a snapshot: never refetched while she's answering it. */
 export const useReviewSession = (chapterId?: string) =>
   useQuery({

@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { House, Library, Mic, UserRound, type LucideIcon } from "lucide-react";
+import { ChartColumn, House, Library, Mic, UserRound, type LucideIcon } from "lucide-react";
 import { Link, Navigate, Outlet, useLocation } from "react-router";
 import { useMe } from "../lib/queries";
 
@@ -9,6 +9,7 @@ const TABS: { to: string; label: string; icon: LucideIcon; match: (path: string)
   { to: "/", label: "Learn", icon: House, match: (p) => p === "/" || p.startsWith("/chapters/") },
   { to: "/admin", label: "Content", icon: Library, match: (p) => p === "/admin" || p.startsWith("/admin/chapters/") },
   { to: "/admin/record", label: "Record", icon: Mic, match: (p) => p === "/admin/record" },
+  { to: "/admin/progress", label: "Progress", icon: ChartColumn, match: (p) => p === "/admin/progress" },
   { to: "/account", label: "Account", icon: UserRound, match: (p) => p === "/account" },
 ];
 
