@@ -54,6 +54,7 @@ import {
   updateItem,
 } from "./content";
 import type { Db } from "./db";
+import { learnerProgress } from "./progress";
 import { answerCard, buildSession, reviewSummary } from "./srs";
 import { listLetterSounds, listSyllablesToRecord, phraseOnlyLetters, queueSyllableTts } from "./syllables";
 import { queueTts } from "./tts";
@@ -161,6 +162,7 @@ export function createApp(db: Db, config: Config) {
     .post("/review/answer", anyUser, zValidator("json", reviewAnswer, invalidInput), (c) =>
       c.json(answerCard(db, c.get("user").id, c.req.valid("json"))),
     )
+    .get("/progress", admin, (c) => c.json(learnerProgress(db)))
     .get("/tts", admin, (c) =>
       c.json({ provider: ttsOn ? config.tts.provider : null, voice: config.tts.voice }),
     )

@@ -41,7 +41,7 @@ export function dayStart(now: Date) {
 }
 
 /** Script items that can be quizzed: they need audio, and nothing archived. */
-function quizzableItems(db: Db): QuizItem[] {
+export function quizzableItems(db: Db): QuizItem[] {
   return db
     .select({ id: items.id, chapterId: items.chapterId, ne: items.ne, roman: items.roman, audioId: items.audioId })
     .from(items)
