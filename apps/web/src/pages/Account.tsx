@@ -1,5 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { LoaderCircle, LogOut } from "lucide-react";
+import { useNavigate } from "react-router";
 import { Avatar, List, PageHeader } from "../components/ui";
 import { client, unwrap } from "../lib/api";
 import { useMe } from "../lib/queries";
@@ -7,11 +8,16 @@ import { useMe } from "../lib/queries";
 export function Account() {
   const { data: me } = useMe();
   const qc = useQueryClient();
+  const navigate = useNavigate();
   const logout = useMutation({
     mutationFn: () => unwrap(client.auth.logout.$post()),
     onSuccess: () => {
-      qc.clear();
+      // the next login starts on home, not back on this page
+      navigate("/", { replace: true });
+      // set "me" in place: qc.clear() detached the App from it, so this page
+      // stayed on screen instead of the login form
       qc.setQueryData(["me"], null);
+      qc.removeQueries({ predicate: (q) => q.queryKey[0] !== "me" });
     },
   });
 
