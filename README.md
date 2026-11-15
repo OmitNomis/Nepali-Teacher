@@ -6,8 +6,9 @@ English admin side for writing lessons and recording audio.
 - **Learner** (`/`): chapters by track (文字 script / 会話 phrases), tap-to-hear
   letter tiles, phrase cards with politeness-tier variants, "全部聞く" play-all.
 - **Admin** (`/admin`): create and reorder chapters and items, record audio on
-  each row, a one-at-a-time recording queue (`/admin/record`), and JSON
-  import/export.
+  each row, a one-at-a-time recording queue (`/admin/record`), JSON
+  import/export, and each learner's quiz progress (`/admin/progress`: streak,
+  answers per day, cards due, letters they mix up).
 - **Audio**: recordings are trimmed and loudness-normalized by ffmpeg in the
   background. Items without a recording get a TTS placeholder that the
   recording queue nudges you to replace.
