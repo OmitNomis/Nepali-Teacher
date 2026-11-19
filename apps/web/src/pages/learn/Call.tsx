@@ -37,14 +37,20 @@ function Orb({ levels, status }: { levels: RefObject<Levels>; status: CallStatus
     return () => cancelAnimationFrame(raf);
   }, [levels]);
 
-  const waiting = status === "connecting";
+  const waiting = status === "ringing";
   const live = status === "live";
+  const over = status === "ended" || status === "error";
   return (
     <div
       ref={el}
-      className="relative grid size-64 place-items-center"
+      className={clsx(
+        "relative grid size-64 place-items-center transition-[transform,opacity,filter] duration-700",
+        over && "scale-90 opacity-50 grayscale",
+      )}
       style={{ ["--me" as string]: 0, ["--tu" as string]: 0 }}
     >
+      {/* picked up: one flash outwards */}
+      {live && <span className="animate-pickup-flash absolute inset-10 rounded-full bg-on-deep" />}
       {/* ringing */}
       {(waiting || status === "idle") && (
         <>
@@ -58,7 +64,10 @@ function Orb({ levels, status }: { levels: RefObject<Levels>; status: CallStatus
       {/* the tutor's voice */}
       <span
         className="absolute inset-2 rounded-full bg-accent blur-3xl transition-opacity"
-        style={{ opacity: live ? "calc(0.12 + var(--tu) * 0.9)" : 0.1, transform: "scale(calc(0.9 + var(--tu) * 0.5))" }}
+        style={{
+          opacity: live || waiting ? "calc(0.12 + var(--tu) * 0.9)" : 0.1,
+          transform: "scale(calc(0.9 + var(--tu) * 0.5))",
+        }}
       />
       <span
         className="absolute inset-7 rounded-full border-2 border-accent/60"
@@ -69,7 +78,8 @@ function Orb({ levels, status }: { levels: RefObject<Levels>; status: CallStatus
         className="absolute inset-9 rounded-full border-[3px] border-voice"
         style={{ transform: "scale(calc(1 + var(--me) * 0.45))", opacity: "calc(var(--me) * 1.8)" }}
       />
-      {/* core */}
+      {/* core: shakes while ringing, pops on pickup */}
+      <div className={clsx(waiting && "animate-phone-ring", live && "animate-pickup-pop")}>
       <div
         className="relative grid size-44 place-items-center overflow-hidden rounded-full shadow-[0_20px_60px_-15px_rgb(0_0_0/0.6)]"
         style={{ transform: "scale(calc(1 + var(--tu) * 0.07))" }}
@@ -85,13 +95,15 @@ function Orb({ levels, status }: { levels: RefObject<Levels>; status: CallStatus
           अ
         </span>
       </div>
+      </div>
     </div>
   );
 }
 
-function statusLine(status: CallStatus, clock: string, speaking: boolean) {
+function statusLine(status: CallStatus, clock: string, speaking: boolean, fresh: boolean) {
   if (status === "idle") return "ネパール語で話してみよう";
-  if (status === "connecting") return "呼び出し中…";
+  if (status === "ringing") return "呼び出し中…";
+  if (status === "live" && fresh) return "つながりました";
   if (status === "live") return `${speaking ? "話しています" : "聞いています"} · ${clock}`;
   if (status === "ended") return `通話終了 · ${clock}`;
   return "つながりませんでした";
@@ -128,7 +140,8 @@ export function Call() {
   const { status } = call;
   const lastTutor = [...call.captions].reverse().find((c) => c.who === "tutor");
   const lastMe = [...call.captions].reverse().find((c) => c.who === "me");
-  const inCall = status === "connecting" || status === "live";
+  const inCall = status === "ringing" || status === "live";
+  const fresh = call.startedAt !== null && (clock === "0:00" || clock === "0:01");
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-deep text-on-deep">
@@ -152,7 +165,9 @@ export function Call() {
 
         <div className="text-center">
           <h1 className="text-[28px] font-bold">AI先生</h1>
-          <p className="mt-1 text-[15px] tabular-nums opacity-75">{statusLine(status, clock, call.tutorSpeaking)}</p>
+          <p key={fresh ? "fresh" : status} className="animate-fade mt-1 text-[15px] tabular-nums opacity-75">
+            {statusLine(status, clock, call.tutorSpeaking, fresh)}
+          </p>
         </div>
 
         <div className="grid flex-1 place-items-center">
