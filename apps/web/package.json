@@ -9,6 +9,7 @@
     "typecheck": "tsc -p ."
   },
   "dependencies": {
+    "@google/genai": "^3.4.0",
     "@nt/shared": "workspace:*",
     "@tanstack/react-query": "^5.104.2",
     "clsx": "^2.1.1",
