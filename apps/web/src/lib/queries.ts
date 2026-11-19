@@ -71,3 +71,11 @@ export const useLetterSounds = (enabled = true) =>
     select: (sounds) => new Map(sounds.map((s) => [letterKey(s.ne), s.audioUrl])),
     enabled,
   });
+
+/** Whether the server has a Gemini key for live tutor calls. */
+export const useCallEnabled = () =>
+  useQuery({
+    queryKey: ["call-enabled"],
+    queryFn: () => unwrap(client.call.$get()).then((r) => r.enabled),
+    staleTime: Infinity,
+  });
