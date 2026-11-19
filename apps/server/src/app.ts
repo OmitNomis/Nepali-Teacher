@@ -36,6 +36,7 @@ import {
   requireRole,
   sessionUser,
 } from "./auth";
+import { createCallToken } from "./call";
 import type { Config } from "./config";
 import {
   ConflictError,
@@ -88,6 +89,8 @@ export function createApp(db: Db, config: Config) {
   const anyUser = requireRole(db);
   const admin = requireRole(db, "admin");
   const throttle = new LoginThrottle();
+  // each call costs a Gemini session: a handful per user per window is plenty
+  const callThrottle = new LoginThrottle();
   const ttsOn = config.tts.provider !== "none";
   const autoTts = (ids: string[]) => {
     if (!ttsOn) return 0;
@@ -153,6 +156,21 @@ export function createApp(db: Db, config: Config) {
       if (!ttsOn) throw new HTTPException(400, { message: "TTS is turned off on the server" });
       const chapter = getChapter(db, c.req.param("id"), { includeArchived: false });
       return c.json({ queued: queueTts(db, chapter.items.map((i) => i.id)) });
+    })
+    .get("/call", anyUser, (c) => c.json({ enabled: Boolean(config.gemini.apiKey) }))
+    .post("/call/token", anyUser, async (c) => {
+      if (!config.gemini.apiKey) throw new HTTPException(404, { message: "Calls are turned off on the server" });
+      const user = c.get("user");
+      if (callThrottle.blocked(String(user.id))) {
+        throw new HTTPException(429, { message: "Too many calls, try again in a minute" });
+      }
+      callThrottle.fail(String(user.id));
+      try {
+        return c.json(await createCallToken(db, config, user.displayName));
+      } catch (err) {
+        console.error(err);
+        throw new HTTPException(502, { message: "Could not start the call" });
+      }
     })
     .get("/letter-sounds", anyUser, (c) => c.json(listLetterSounds(db)))
     .get("/review/summary", anyUser, (c) => c.json(reviewSummary(db, c.get("user").id)))

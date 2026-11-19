@@ -20,6 +20,8 @@ export function loadConfig(env = process.env) {
     webDist: env.WEB_DIST ? path.resolve(env.WEB_DIST) : undefined,
     secureCookies: env.NODE_ENV === "production",
     ffmpeg: env.FFMPEG_PATH ?? "ffmpeg",
+    // Live tutor calls (Gemini Live API); unset hides the feature
+    gemini: { apiKey: env.GEMINI_API_KEY || undefined },
     tts: {
       // azure (official, needs a key) | edge / google (unofficial, no key) | none
       provider,
