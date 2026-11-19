@@ -72,6 +72,14 @@ content. See README.md for setup, deploy, and the chapter JSON format.
   told apart in the quiz). Only the same spelling in two chapters
   (`letterKey`) counts as one answer.
 
+- AI tutor calls (2026-11-19, `/call`): the phone talks to Gemini Live
+  (`gemini-3.1-flash-live-preview`, voice Zephyr) directly; `POST /api/call/token`
+  mints a one-use ephemeral token with the tutor prompt (taught phrases) and
+  the `show_card` tool locked in, via plain fetch (the Gemini SDK needs Node 22,
+  so only the web app uses it). Off unless `GEMINI_API_KEY` is set. Cards are
+  the AI's own spelling (Devanagari, romaji, Japanese; no katakana on purpose)
+  and say so. Free-tier key: Google may use the audio.
+
 ## TTS status (as of 2026-10-27)
 - `edge` (keyless default): broke again by 2026-10-27 (msedge-tts 2.1.0 got
   "Unexpected server response: 200"; Microsoft moved the endpoint and changed
