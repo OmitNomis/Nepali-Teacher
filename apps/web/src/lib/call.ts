@@ -1,6 +1,7 @@
 import { GoogleGenAI, type LiveServerMessage, type Session } from "@google/genai";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { client, unwrap } from "./api";
+import { hangupTone, pickupBlip, ringback } from "./phoneTones";
 
 /**
  * A live voice call with the AI tutor (Gemini Live API). The phone streams the
@@ -8,7 +9,12 @@ import { client, unwrap } from "./api";
  * server only hands out a one-use token with the tutor's setup locked in.
  */
 
-export type CallStatus = "idle" | "connecting" | "live" | "ended" | "error";
+export type CallStatus = "idle" | "ringing" | "live" | "ended" | "error";
+
+// Ring at least this long (one full ring) before the tutor picks up.
+const MIN_RING_S = 2.6;
+// Give up if the tutor hasn't said anything by then.
+const RING_TIMEOUT_MS = 25_000;
 
 /** A word the tutor put on screen (show_card). */
 export type TutorCard = { id: string; devanagari: string; romaji: string; japanese: string; note?: string };
@@ -89,6 +95,10 @@ export function useTutorCall() {
     raf: 0,
     muted: false,
     closing: false,
+    ringStart: 0,
+    pickedUp: false,
+    stopRing: null as (() => void) | null,
+    timers: [] as ReturnType<typeof setTimeout>[],
   });
 
   const stopPlayback = useCallback(() => {
@@ -104,10 +114,15 @@ export function useTutorCall() {
     s.nextAt = 0;
   }, []);
 
-  const teardown = useCallback(() => {
+  /** Ends everything; with `tone`, plays the busy tone before the audio closes. */
+  const teardown = useCallback((tone = false) => {
     const s = r.current;
     s.closing = true;
     cancelAnimationFrame(s.raf);
+    s.timers.forEach(clearTimeout);
+    s.timers = [];
+    s.stopRing?.();
+    s.stopRing = null;
     stopPlayback();
     try {
       s.session?.close();
@@ -118,13 +133,18 @@ export function useTutorCall() {
     s.stream?.getTracks().forEach((t) => t.stop());
     s.stream = null;
     setEndedAt((t) => t ?? Date.now());
-    void s.ctx?.close().catch(() => {});
+    const ctx = s.ctx;
     s.ctx = null;
+    s.outGain = null;
+    if (ctx) {
+      const wait = tone && ctx.state === "running" ? hangupTone(ctx, ctx.destination) : 0;
+      setTimeout(() => void ctx.close().catch(() => {}), wait * 1000 + 100);
+    }
     levels.current = { me: 0, tutor: 0 };
     setTutorSpeaking(false);
   }, [stopPlayback]);
 
-  useEffect(() => teardown, [teardown]);
+  useEffect(() => () => teardown(), [teardown]);
 
   /** Appends streamed transcript text to the last caption of the same speaker. */
   const addCaption = useCallback((who: Caption["who"], text: string) => {
@@ -135,9 +155,29 @@ export function useTutorCall() {
     });
   }, []);
 
+  /** The tutor's first words: let the ring finish, then pick up with a blip and start the clock. */
+  const pickUp = useCallback(() => {
+    const s = r.current;
+    const ctx = s.ctx;
+    if (!ctx || !s.outGain || s.pickedUp) return;
+    s.pickedUp = true;
+    const at = Math.max(ctx.currentTime + 0.05, s.ringStart + MIN_RING_S);
+    s.nextAt = at + 0.35;
+    s.timers.push(
+      setTimeout(() => {
+        s.stopRing?.();
+        s.stopRing = null;
+        if (s.outGain) pickupBlip(ctx, s.outGain);
+        setStartedAt(Date.now());
+        setStatus("live");
+      }, (at - ctx.currentTime) * 1000),
+    );
+  }, []);
+
   const play = useCallback((b64: string) => {
     const s = r.current;
     if (!s.ctx || !s.outGain) return;
+    pickUp();
     const samples = pcm16ToFloat(b64);
     const buf = s.ctx.createBuffer(1, samples.length, 24000);
     buf.copyToChannel(samples, 0);
@@ -149,7 +189,7 @@ export function useTutorCall() {
     s.nextAt = at + buf.duration;
     s.playing.add(src);
     src.onended = () => s.playing.delete(src);
-  }, []);
+  }, [pickUp]);
 
   const onMessage = useCallback(
     (m: LiveServerMessage) => {
@@ -187,7 +227,7 @@ export function useTutorCall() {
   );
 
   const start = useCallback(async () => {
-    setStatus("connecting");
+    setStatus("ringing");
     setError(null);
     setCaptions([]);
     setCards([]);
@@ -196,11 +236,13 @@ export function useTutorCall() {
     setEndedAt(null);
     const s = r.current;
     s.closing = false;
+    s.pickedUp = false;
     try {
       // Created inside the tap so iOS lets it make sound.
       const ctx = new AudioContext();
       s.ctx = ctx;
       await ctx.resume();
+      s.ringStart = ctx.currentTime;
       const [stream, { token, model }] = await Promise.all([
         navigator.mediaDevices.getUserMedia({
           audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true, channelCount: 1 },
@@ -214,6 +256,8 @@ export function useTutorCall() {
       outMeter.fftSize = 512;
       outGain.connect(outMeter).connect(ctx.destination);
       s.outGain = outGain;
+      // through the meter, so the orb pulses with the ring
+      s.stopRing = ringback(ctx, outGain);
 
       await ctx.audioWorklet.addModule(URL.createObjectURL(new Blob([CAPTURE_WORKLET], { type: "text/javascript" })));
       const mic = ctx.createMediaStreamSource(stream);
@@ -237,12 +281,12 @@ export function useTutorCall() {
             if (s.closing) return;
             setError("通話が切れました");
             setStatus("error");
-            teardown();
+            teardown(true);
           },
           onclose: () => {
             if (s.closing) return;
             setStatus("ended");
-            teardown();
+            teardown(true);
           },
         },
       });
@@ -251,8 +295,14 @@ export function useTutorCall() {
         turns: [{ role: "user", parts: [{ text: "（電話がつながりました）" }] }],
         turnComplete: true,
       });
-      setStartedAt(Date.now());
-      setStatus("live");
+      s.timers.push(
+        setTimeout(() => {
+          if (s.pickedUp || s.closing) return;
+          setError("応答がありませんでした");
+          setStatus("error");
+          teardown(true);
+        }, RING_TIMEOUT_MS),
+      );
 
       const timeBuf = new Uint8Array(micMeter.fftSize);
       const outBuf = new Uint8Array(outMeter.fftSize);
@@ -284,7 +334,7 @@ export function useTutorCall() {
   }, [onMessage, teardown]);
 
   const hangUp = useCallback(() => {
-    teardown();
+    teardown(true);
     setStatus("ended");
   }, [teardown]);
 
