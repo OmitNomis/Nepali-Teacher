@@ -1,10 +1,10 @@
 import clsx from "clsx";
-import { BookOpen, Check, ChevronRight, CloudOff } from "lucide-react";
+import { BookOpen, Check, ChevronRight, CloudOff, Phone } from "lucide-react";
 import { Link } from "react-router";
 import { Avatar, Badge, EmptyState, List, PageLoader, SectionTitle } from "../../components/ui";
 import type { ChapterSummary, ReviewSummary } from "../../lib/api";
 import { lastChapter } from "../../lib/lastChapter";
-import { useChapters, useMe, useReviewSummary } from "../../lib/queries";
+import { useCallEnabled, useChapters, useMe, useReviewSummary } from "../../lib/queries";
 
 const countLabel = (c: ChapterSummary) => `${c.itemCount}${c.track === "script" ? "文字" : "フレーズ"}`;
 
@@ -120,6 +120,28 @@ function PhraseRow({ chapter, last }: { chapter: ChapterSummary; last: boolean }
   );
 }
 
+/** A call with the AI tutor: talk Nepali out loud, words show up as cards. */
+function CallPanel() {
+  return (
+    <Link
+      to="/call"
+      className="press group relative flex items-center gap-4 overflow-hidden rounded-[24px] border border-line bg-surface p-5"
+    >
+      <div className="pointer-events-none absolute -top-12 -right-10 size-36 rounded-full bg-accent/15 blur-2xl transition-transform group-hover:scale-110" />
+      <div className="pointer-events-none absolute -bottom-14 left-10 size-32 rounded-full bg-voice/15 blur-2xl" />
+      <span className="relative grid size-12 shrink-0 place-items-center rounded-full bg-deep text-on-deep">
+        <span className="animate-ring absolute inset-0 rounded-full" />
+        <Phone className="size-5" />
+      </span>
+      <div className="relative min-w-0 flex-1">
+        <p className="font-bold">AI先生と電話で練習</p>
+        <p className="text-[14px] text-muted">声で話して、わからない言葉はカードで</p>
+      </div>
+      <ChevronRight className="relative size-4 shrink-0 text-muted/70" />
+    </Link>
+  );
+}
+
 const today = () =>
   new Intl.DateTimeFormat("ja-JP", { month: "long", day: "numeric", weekday: "long" }).format(new Date());
 
@@ -127,6 +149,7 @@ export function Home() {
   const { data: me } = useMe();
   const { data: chapters, isPending, isError } = useChapters();
   const { data: summary } = useReviewSummary();
+  const { data: callEnabled } = useCallEnabled();
 
   const script = chapters?.filter((c) => c.track === "script") ?? [];
   const phrases = chapters?.filter((c) => c.track === "phrases") ?? [];
@@ -149,6 +172,7 @@ export function Home() {
           )}
         </header>
         {summary && <ReviewPanel summary={summary} />}
+        {callEnabled && <CallPanel />}
       </div>
 
       {isPending ? (
