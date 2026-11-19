@@ -76,6 +76,7 @@ export function useTutorCall() {
   const [cards, setCards] = useState<TutorCard[]>([]);
   const [openCard, setOpenCard] = useState<TutorCard | null>(null);
   const [startedAt, setStartedAt] = useState<number | null>(null);
+  const [endedAt, setEndedAt] = useState<number | null>(null);
   const levels = useRef<Levels>({ me: 0, tutor: 0 });
 
   const r = useRef({
@@ -116,6 +117,7 @@ export function useTutorCall() {
     s.session = null;
     s.stream?.getTracks().forEach((t) => t.stop());
     s.stream = null;
+    setEndedAt((t) => t ?? Date.now());
     void s.ctx?.close().catch(() => {});
     s.ctx = null;
     levels.current = { me: 0, tutor: 0 };
@@ -190,6 +192,8 @@ export function useTutorCall() {
     setCaptions([]);
     setCards([]);
     setOpenCard(null);
+    setStartedAt(null);
+    setEndedAt(null);
     const s = r.current;
     s.closing = false;
     try {
@@ -306,6 +310,7 @@ export function useTutorCall() {
     cards,
     openCard,
     startedAt,
+    endedAt,
     levels,
     start,
     hangUp,

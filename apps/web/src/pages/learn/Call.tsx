@@ -5,15 +5,16 @@ import { Link } from "react-router";
 import { TutorCardSheet } from "../../components/TutorCardSheet";
 import { useTutorCall, type CallStatus, type Levels } from "../../lib/call";
 
-function useClock(since: number | null) {
+/** m:ss since the pickup; stops at the hang-up. */
+function useClock(since: number | null, until: number | null) {
   const [now, setNow] = useState(Date.now());
   useEffect(() => {
-    if (since === null) return;
+    if (since === null || until !== null) return;
     const t = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(t);
-  }, [since]);
+  }, [since, until]);
   if (since === null) return "0:00";
-  const s = Math.max(0, Math.floor((now - since) / 1000));
+  const s = Math.max(0, Math.floor(((until ?? now) - since) / 1000));
   return `${Math.floor(s / 60)}:${String(s % 60).padStart(2, "0")}`;
 }
 
@@ -123,7 +124,7 @@ function RoundButton({
 
 export function Call() {
   const call = useTutorCall();
-  const clock = useClock(call.startedAt);
+  const clock = useClock(call.startedAt, call.endedAt);
   const { status } = call;
   const lastTutor = [...call.captions].reverse().find((c) => c.who === "tutor");
   const lastMe = [...call.captions].reverse().find((c) => c.who === "me");
